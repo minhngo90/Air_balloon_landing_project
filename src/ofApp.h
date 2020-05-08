@@ -5,7 +5,8 @@
 #include  "ofxAssimpModelLoader.h"
 #include "ParticleSystem.h"
 #include "ParticleEmitter.h"
-
+#include "box.h"
+#include "ray.h"
 
 
 
@@ -33,13 +34,16 @@ class ofApp : public ofBaseApp{
 		void savePicture();
 		void toggleWireframeMode();
 		void togglePointsDisplay();
+    glm::vec3 getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm);
+    void drawBox(const Box &box);
+    Box meshBounds(const ofMesh &);
 		
 		
 		ofEasyCam cam;
-		ofxAssimpModelLoader lander;
+		ofxAssimpModelLoader lander, terrain;
 		ofLight light;
 		ofImage backgroundImage;
-		ofCamera *theCam = NULL;
+		ofCamera *theCam;
 		ofCamera topCam;
 		
 		float angle;
@@ -58,6 +62,9 @@ class ofApp : public ofBaseApp{
 		//GravityForce gray;
 
 		TurbulenceForce tur1, tur2;
+    
+    glm::vec3 mouseDownPos;
+    glm::vec3 mouseLastPos;
 
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
@@ -66,4 +73,19 @@ class ofApp : public ofBaseApp{
 	
 		bool bBackgroundLoaded = false;
 		bool bLanderLoaded = false;
+    bool bLanderSelected = false;
+    bool bTerrainSelected;
+    bool bInDrag = false;
+    
+    Box boundingBox;
+    Box landerBounds;
+    
+    // sound
+    ofSoundPlayer landerMvmt;
+    
+    // lighting variables 
+    ofLight landingArea1, landingArea2, landingArea3, areaLight, sunlight;
+    ofPlanePrimitive plane;
+    ofMaterial planeMaterial;
+
 };
