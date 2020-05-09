@@ -9,6 +9,7 @@
 
 #include "ofApp.h"
 #include "Util.h"
+#include <glm/gtx/intersect.hpp>
 
 //--------------------------------------------------------------
 // setup scene, lighting, state and load geometry
@@ -27,10 +28,8 @@ void ofApp::setup() {
 	cam.setDistance(10);
 	cam.setNearClip(.1);
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
-	ofSetVerticalSync(true);
-	cam.disableMouseInput();
-	ofEnableSmoothing();
-	ofEnableDepthTest();
+	
+	
 
 	topCam.setNearClip(.1);
 	topCam.setFov(65.5);
@@ -41,18 +40,86 @@ void ofApp::setup() {
 	//
 	theCam = &cam;
 
+	ofSetVerticalSync(true);
+	cam.disableMouseInput();
+	ofEnableSmoothing();
+	ofEnableDepthTest();
 	
-	
+	// add in lighting for terrain area
+
+	// spot light for first landnig area
+	landingArea1.setup();
+	landingArea1.enable();
+	landingArea1.setSpotlight();
+	landingArea1.setScale(.05);
+	landingArea1.setSpotlightCutOff(15);
+	landingArea1.setAttenuation(1, .001, .001);
+	landingArea1.setAmbientColor(ofFloatColor(1, 0, 0));
+	landingArea1.setDiffuseColor(ofColor(255, 0, 0));
+	landingArea1.setSpecularColor(ofColor(255, 0, 0));
+	landingArea1.rotate(-90, ofVec3f(1, 0, 0));
+	landingArea1.setPosition(-9, 5, 8);
+
+	// spot light for second landnig area
+	landingArea2.setup();
+	landingArea2.enable();
+	landingArea2.setSpotlight();
+	landingArea2.setScale(.05);
+	landingArea2.setSpotlightCutOff(15);
+	landingArea2.setAttenuation(1, .001, .001);
+	landingArea2.setAmbientColor(ofFloatColor(0, 1, 0));
+	landingArea2.setDiffuseColor(ofColor(0, 255, 0));
+	landingArea2.setSpecularColor(ofColor(0, 255, 0));
+	landingArea2.rotate(-90, ofVec3f(1, 0, 0));
+	landingArea2.setPosition(-4, 5, 4);
+
+	// spot light for third landnig area
+	landingArea3.setup();
+	landingArea3.enable();
+	landingArea3.setSpotlight();
+	landingArea3.setScale(.05);
+	landingArea3.setSpotlightCutOff(15);
+	landingArea3.setAttenuation(1, .001, .001);
+	landingArea3.setAmbientColor(ofFloatColor(0, 0, 1));
+	landingArea3.setDiffuseColor(ofColor(0, 0, 255));
+	landingArea3.setSpecularColor(ofColor(0, 0, 255));
+	landingArea3.rotate(-90, ofVec3f(1, 0, 0));
+	landingArea3.setPosition(-1, 5, -4);
+
+	// create a directional sunlight onto the entire area 
+	areaLight.setup();
+	areaLight.enable();
+	areaLight.setPointLight();
+	areaLight.setScale(.05);
+	areaLight.setAmbientColor(ofColor(0, 191, 255));
+	areaLight.setDiffuseColor(ofColor(0, 191, 255));
+	areaLight.setSpecularColor(ofColor(0, 191, 255));
+	areaLight.rotate(45, ofVec3f(0, 1, 0));
+	areaLight.rotate(-45, ofVec3f(1, 0, 0));
+	areaLight.setPosition(5, 15, 5);
+
+	// create light for sun rays
+	sunlight.setup();
+	sunlight.enable();
+	sunlight.setPointLight();
+	sunlight.setScale(.05);
+	sunlight.setAmbientColor(ofFloatColor(1, 0, 0));
+	sunlight.setDiffuseColor(ofFloatColor(1, 1, 0));
+	sunlight.setSpecularColor(ofFloatColor(1, 0, 0));
+	sunlight.rotate(-45, ofVec3f(0, 1, 0));
+	sunlight.rotate(45, ofVec3f(1, 0, 0));
+	sunlight.setPosition(15, 15, -15);
 
 	// load BG image
 	//
 	bBackgroundLoaded = backgroundImage.load("images/starfield-plain.jpg");
-
+	//bBackgroundLoaded = backgroundImage.load("images/starry_night4.jpg");
 
 	// setup rudimentary lighting 
 	//
 	initLightingAndMaterials();
 
+	// setup terrain model
 	terrain.loadModel("geo/EarthModel.obj");
 	terrain.setScaleNormalization(false);
 
@@ -133,15 +200,19 @@ void ofApp::setup() {
 	
 	angle = 0;
 	heading = 20*ofVec3f(0,0,-1);
+
+	// sounds for thruster movement
+	//landerMvmt.load("sounds/landerMvmt.mp3");
  
 	// Set up GUI 
 	gui.setup();
 	gui.add(level.setup("level", 10, 1, 40));
+	cout << "Start building tree" << endl;
 	starttime = ofGetElapsedTimeMillis();
 	
 	// create KdTree for terrain
 	//
-	kdtree.create(terrain.getMesh(0), 25);
+	kdtree.create(terrain.getMesh(0), 20);
 	endtime = ofGetElapsedTimeMillis();
 	cout << "building tree time :" << (endtime - starttime) / 1000 << "s." << endl;
 }
@@ -169,6 +240,7 @@ void ofApp::update() {
 		lander.setPosition(lemsys.particles[0].position.x, lemsys.particles[0].position.y, lemsys.particles[0].position.z);
 	}
 
+	// check box intersect of lander and terrain
 	boxHitList.clear();
 	if (kdtree.intersect(landerBounds, kdtree.root, boxHitList)) {
 		intersect = true;
@@ -186,7 +258,8 @@ void ofApp::draw() {
 		ofDisableDepthTest();
 		ofSetColor(50, 50, 50);
 		ofScale(2, 2);
-		backgroundImage.draw(-200, -100);
+		//backgroundImage.draw(-200, -100);
+		backgroundImage.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
 		ofEnableDepthTest();
 		ofPopMatrix();
 	}
@@ -199,6 +272,13 @@ void ofApp::draw() {
 	theCam->begin();
 
 	ofPushMatrix();
+
+	// draw the lights
+    landingArea1.draw();
+    landingArea2.draw();
+    landingArea3.draw();
+    areaLight.draw();
+    sunlight.draw();
 
 		// draw a reference grid
 		//
@@ -265,7 +345,7 @@ void ofApp::draw() {
 	//
 	if (bPointSelected) {
 		ofSetColor(ofColor::blue);
-		ofDrawSphere(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z(), .1);
+		ofDrawSphere(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z(), .5);
 	}
 
 	if (intersect) {
@@ -420,21 +500,25 @@ void ofApp::keyPressed(int key) {
 		
 		lemsys.addForce(new ThrusterForce(ofVec3f(heading).rotate(angle, ofVec3f(0, 1, 0))));
 		lemEmit.start();
+		//landerMvmt.play();
 		break;
 	case OF_KEY_DOWN:   // move backward
 		
 		lemsys.addForce(new ThrusterForce(-ofVec3f(heading).rotate(angle, ofVec3f(0, 1, 0))));
 		lemEmit.start();
+		//landerMvmt.play();
 		break;
 	case OF_KEY_LEFT:   // move left
 		
 		lemsys.addForce(new ThrusterForce(-ofVec3f(heading).rotate(angle-90, ofVec3f(0, 1, 0))));
 		lemEmit.start();
+		//landerMvmt.play();
 		break;
 	case OF_KEY_RIGHT:   // move right
 		
 		lemsys.addForce(new ThrusterForce(ofVec3f(heading).rotate(angle-90, ofVec3f(0, 1, 0))));
 		lemEmit.start();
+		//landerMvmt.play();
 		break;
 	default:
 		break;
@@ -470,25 +554,31 @@ void ofApp::keyReleased(int key) {
 		break;
 	case 'w':     
 		lemEmit.stop();
+		//landerMvmt.stop();
 		break;
 	case 's':     
 		lemEmit.stop();
+		//landerMvmt.stop();
 		break;
 	case OF_KEY_UP:    // move forward
 		
 		lemEmit.stop();
+		//landerMvmt.stop();
 		break;
 	case OF_KEY_DOWN:   // move backward
 		
 		lemEmit.stop();
+		//landerMvmt.stop();
 		break;
 	case OF_KEY_LEFT:   // move left
 		
 		lemEmit.stop();
+		//landerMvmt.stop();
 		break;
 	case OF_KEY_RIGHT:   // move right
 		
 		lemEmit.stop();
+		//landerMvmt.stop();
 		break;
 	default:
 		break;
@@ -564,7 +654,7 @@ void ofApp::mouseDragged(int x, int y, int button) {
 //
 	if (cam.getMouseInputEnabled()) return;
 
-	if (bInDrag) {
+	if (bLanderSelected && bInDrag) {
 		//cout << "dragged bInDrag: " << bInDrag << endl;
 		glm::vec3 landerPos = lander.getPosition();
 		//cout << landerPos << endl;
@@ -601,6 +691,8 @@ void ofApp::mouseDragged(int x, int y, int button) {
 void ofApp::mouseReleased(int x, int y, int button) {
 	bLanderSelected = false;
 	bInDrag = false;
+	landerMvmt.stop();
+	lemEmit.stop();
 }
 
 

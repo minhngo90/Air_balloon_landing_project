@@ -104,4 +104,12 @@ class ofApp : public ofBaseApp{
 		bool intersect = false;
 		vector<Box> boxHitList;
 		bool collision = false;
+
+		// sound
+		ofSoundPlayer landerMvmt;
+
+		// lighting variables 
+		ofLight landingArea1, landingArea2, landingArea3, areaLight, sunlight;
+		ofPlanePrimitive plane;
+		ofMaterial planeMaterial;
 };

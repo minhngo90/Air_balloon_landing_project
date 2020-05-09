@@ -95,7 +95,37 @@ int KdTree::getMeshPointsInBox(const ofMesh & mesh, const vector<int>& points,
 //  Subdivide a Box; return children in  boxList
 //
 void KdTree::subDivideBox(const Box &box, vector<Box> & boxList) {
+	// octree
+	Vector3 min = box.parameters[0];
+	Vector3 max = box.parameters[1];
+	Vector3 size = max - min;
+	Vector3 center = size / 2 + min;
+	float xdist = (max.x() - min.x()) / 2;
+	float ydist = (max.y() - min.y()) / 2;
+	float zdist = (max.z() - min.z()) / 2;
+	Vector3 h = Vector3(0, ydist, 0);
+
+	//  generate ground floor
+	//
+	Box b[8];
+	b[0] = Box(min, center);
+	b[1] = Box(b[0].min() + Vector3(xdist, 0, 0), b[0].max() + Vector3(xdist, 0, 0));
+	b[2] = Box(b[1].min() + Vector3(0, 0, zdist), b[1].max() + Vector3(0, 0, zdist));
+	b[3] = Box(b[2].min() + Vector3(-xdist, 0, 0), b[2].max() + Vector3(-xdist, 0, 0));
+
+	boxList.clear();
+	for (int i = 0; i < 4; i++)
+		boxList.push_back(b[i]);
+
+	// generate second story
+	//
+	for (int i = 4; i < 8; i++) {
+		b[i] = Box(b[i - 4].min() + h, b[i - 4].max() + h);
+		boxList.push_back(b[i]);
+	}
 	
+	/*
+	//kdtree
 	Vector3 min = box.parameters[0];
 	Vector3 max = box.parameters[1];
 	Vector3 size = max - min;
@@ -126,7 +156,7 @@ void KdTree::subDivideBox(const Box &box, vector<Box> & boxList) {
 		boxList.push_back(box2);
 
 	}
-
+	*/
 	
 }
 
