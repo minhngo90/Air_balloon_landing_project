@@ -95,6 +95,7 @@ int KdTree::getMeshPointsInBox(const ofMesh & mesh, const vector<int>& points,
 //  Subdivide a Box; return children in  boxList
 //
 void KdTree::subDivideBox(const Box &box, vector<Box> & boxList) {
+	
 	// octree
 	Vector3 min = box.parameters[0];
 	Vector3 max = box.parameters[1];

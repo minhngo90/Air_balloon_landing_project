@@ -38,6 +38,7 @@ class GravityForce: public ParticleForce {
 public:
 	void set(const ofVec3f &g) { gravity = g; }
 	GravityForce(const ofVec3f & gravity);
+	GravityForce() { gravity.set(0, -10, 0); }
 	void updateForce(Particle *);
 };
 
@@ -63,6 +64,7 @@ public:
 
 //  define your ThrusterForce  ...here...
 //
+/*
 class ThrusterForce : public ParticleForce {
 	ofVec3f force;
 public:
@@ -70,5 +72,44 @@ public:
 	ThrusterForce(const ofVec3f & f);
 	void updateForce(Particle *);
 };
+*/
 
+class CyclicForce : public ParticleForce {
+	float magnitude = 1.0;
+public:
+	void set(float mag) { magnitude = mag; }
+	CyclicForce(float magnitude);
+	CyclicForce() {}
+	void updateForce(Particle *);
+};
+
+
+class ThrusterForce : public ParticleForce {
+	ofVec3f thrust = ofVec3f(0, 0, 0);
+public:
+	void set(ofVec3f t) { thrust = t; }
+	void add(ofVec3f t) { thrust += t; }
+	ThrusterForce(ofVec3f t) { thrust = t; }
+	ThrusterForce() {}
+	void updateForce(Particle *);
+};
+
+
+class ImpulseForce : public ParticleForce {
+public:
+	ImpulseForce() {
+		applyOnce = true;
+		applied = true;
+		force = ofVec3f(0, 0, 0);
+	}
+	void apply(const ofVec3f f) {
+		applied = false;
+		force = f;
+	}
+	void updateForce(Particle *particle) {
+		particle->forces += force;
+	}
+
+	ofVec3f force;
+};
 

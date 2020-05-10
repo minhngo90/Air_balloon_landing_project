@@ -54,9 +54,9 @@ void ofApp::setup() {
 	landingArea1.setScale(.05);
 	landingArea1.setSpotlightCutOff(15);
 	landingArea1.setAttenuation(1, .001, .001);
-	landingArea1.setAmbientColor(ofFloatColor(1, 0, 0));
-	landingArea1.setDiffuseColor(ofColor(255, 0, 0));
-	landingArea1.setSpecularColor(ofColor(255, 0, 0));
+	landingArea1.setAmbientColor(ofFloatColor(0, 0, 1));
+	landingArea1.setDiffuseColor(ofColor(0, 0, 255));
+	landingArea1.setSpecularColor(ofColor(0, 0,255));
 	landingArea1.rotate(-90, ofVec3f(1, 0, 0));
 	landingArea1.setPosition(-9, 5, 8);
 
@@ -80,9 +80,9 @@ void ofApp::setup() {
 	landingArea3.setScale(.05);
 	landingArea3.setSpotlightCutOff(15);
 	landingArea3.setAttenuation(1, .001, .001);
-	landingArea3.setAmbientColor(ofFloatColor(0, 0, 1));
-	landingArea3.setDiffuseColor(ofColor(0, 0, 255));
-	landingArea3.setSpecularColor(ofColor(0, 0, 255));
+	landingArea3.setAmbientColor(ofFloatColor(0, 1, 0));
+	landingArea3.setDiffuseColor(ofColor(0, 255, 0));
+	landingArea3.setSpecularColor(ofColor(0, 255, 0));
 	landingArea3.rotate(-90, ofVec3f(1, 0, 0));
 	landingArea3.setPosition(-1, 5, -4);
 
@@ -112,8 +112,8 @@ void ofApp::setup() {
 
 	// load BG image
 	//
-	bBackgroundLoaded = backgroundImage.load("images/starfield-plain.jpg");
-	//bBackgroundLoaded = backgroundImage.load("images/starry_night4.jpg");
+	//bBackgroundLoaded = backgroundImage.load("images/starfield-plain.jpg");
+	bBackgroundLoaded = backgroundImage.load("images/starry_night4.jpg");
 
 	// setup rudimentary lighting 
 	//
@@ -122,6 +122,7 @@ void ofApp::setup() {
 	// setup terrain model
 	terrain.loadModel("geo/EarthModel.obj");
 	terrain.setScaleNormalization(false);
+	//terrain.setScale(.5, .5, .5);
 
 	boundingBox = meshBounds(terrain.getMesh(0));
 
@@ -188,22 +189,29 @@ void ofApp::setup() {
 	//set up thurster emmitter
 	lemEmit.type = DiscEmitter; //Disc Emitter type
 	lemEmit.radius = .2;
-	lemEmit.setVelocity(ofVec3f(0, -2, 0));
+	lemEmit.setVelocity(ofVec3f(0, 1, 0));
 	lemEmit.setParticleRadius(0.01);
 	lemEmit.setGroupSize(50);
 	
 	lemEmit.setRate(100);
 	lemEmit.setLifespan(1);
-	lemEmit.sys->addForce(new GravityForce(ofVec3f(0, -5, 0)));
+	lemEmit.sys->addForce(new GravityForce(ofVec3f(0, 2, 0)));
 	lemEmit.sys->addForce(new TurbulenceForce(ofVec3f(-2, -1, -3), ofVec3f(1, 2, 5)));
 	
 	
 	angle = 0;
-	heading = 20*ofVec3f(0,0,-1);
+	heading = 1*ofVec3f(0,0,-1);
 
 	// sounds for thruster movement
-	//landerMvmt.load("sounds/landerMvmt.mp3");
- 
+	landerMvmt.load("sounds/landerMvmt.mp3");
+
+	//set up explosion sound of the ship
+	explosionSound.load("sounds/blast.mp3");
+
+	//set up landing sound of the ship
+	landingSound.load("sounds/opening.mp3");
+
+	 
 	// Set up GUI 
 	gui.setup();
 	gui.add(level.setup("level", 10, 1, 40));
@@ -212,9 +220,56 @@ void ofApp::setup() {
 	
 	// create KdTree for terrain
 	//
-	kdtree.create(terrain.getMesh(0), 20);
+	kdtree.create(terrain.getMesh(0), 10);
 	endtime = ofGetElapsedTimeMillis();
 	cout << "building tree time :" << (endtime - starttime) / 1000 << "s." << endl;
+
+	// set up the emitter forces
+	//
+	turbForce = new TurbulenceForce(ofVec3f(-5, -5, -5), ofVec3f(5, 5, 5));
+	gravityForce = new GravityForce(ofVec3f(0, -10, 0));
+	radialForce = new ImpulseRadialForce(200.0);
+	radialForce->setHeight(0);
+	//radialForce->set(0.5);
+		
+	landingEmitter.sys->addForce(turbForce);
+	landingEmitter.sys->addForce(gravityForce);
+	landingEmitter.sys->addForce(radialForce);
+	landingEmitter.setVelocity(ofVec3f(0, 1, 0));
+	landingEmitter.setOneShot(true);
+	landingEmitter.setEmitterType(RadialEmitter);
+	landingEmitter.setGroupSize(5000);
+	landingEmitter.setPosition(lander.getPosition());
+	landingEmitter.setLifespan(1);
+	landingEmitter.setRate(15);
+	landingEmitter.setParticleRadius(0.01);
+
+	landing = true;
+
+	explosion.sys->addForce(new TurbulenceForce(ofVec3f(-20, -20, -20), ofVec3f(20, 20, 20)));
+	explosion.sys->addForce(gravityForce);
+	explosion.sys->addForce(new ImpulseRadialForce(500.0));
+	explosion.setVelocity(ofVec3f(0, 100, 0));
+	explosion.setOneShot(true);
+	explosion.setEmitterType(RadialEmitter);
+	explosion.setGroupSize(5000);
+	explosion.setPosition(lander.getSceneCenter() + lander.getPosition());
+	explosion.setLifespan(.5);
+	explosion.setRate(5);
+	explosion.setParticleRadius(.05);
+
+
+	//test collision
+	emitter.setRate(1);
+	emitter.setOneShot(true);
+
+	emitter.start();
+	emitter.setLifespan(10);
+	
+	ParticleSystem *sys = emitter.sys;
+	grav.set(ofVec3f(0, -1.0, 0));
+	sys->addForce(&grav);
+	sys->addForce(new TurbulenceForce(ofVec3f(-3, -1, -1), ofVec3f(3, 1, 1)));
 }
 
 
@@ -234,7 +289,7 @@ void ofApp::update() {
 
 		//update emmitters
 		lemEmit.update();
-		lemEmit.setPosition(lemsys.particles[0].position);
+		lemEmit.setPosition(ofVec3f(lemsys.particles[0].position.x, lemsys.particles[0].position.y+2, lemsys.particles[0].position.z));
 
 		// set position of lander as single lem particle
 		lander.setPosition(lemsys.particles[0].position.x, lemsys.particles[0].position.y, lemsys.particles[0].position.z);
@@ -246,6 +301,32 @@ void ofApp::update() {
 		intersect = true;
 	}
 	else intersect = false;
+
+	landingEmitter.setPosition(lander.getPosition());
+
+	// landing effect
+	if (landing) {
+		landingEmitter.update();
+	}
+
+	// explosion effect
+	explosion.setPosition(lander.getSceneCenter() + lander.getPosition());
+	explosion.update();
+	
+
+	lemEmit.start();
+
+	// check collision
+	checkCollisions();
+	grav.set(ofVec3f(0, -10, 0));
+	//emitter.setParticleRadius(radius);
+
+	// get velocity from slider
+	//glm::vec3 v = velocity;
+	//emitter.setVelocity(v);
+	
+	// update objects you've created here
+	emitter.update();
 }
 
 //--------------------------------------------------------------
@@ -274,11 +355,11 @@ void ofApp::draw() {
 	ofPushMatrix();
 
 	// draw the lights
-    landingArea1.draw();
-    landingArea2.draw();
-    landingArea3.draw();
-    areaLight.draw();
-    sunlight.draw();
+    //landingArea1.draw();
+    //landingArea2.draw();
+    //landingArea3.draw();
+    //areaLight.draw();
+    //sunlight.draw();
 
 		// draw a reference grid
 		//
@@ -353,6 +434,7 @@ void ofApp::draw() {
 			drawBox(boxHitList[i]);
 		}		
 	}
+	emitter.draw();
 
 	ofNoFill();
 	ofSetColor(ofColor::white);
@@ -372,6 +454,15 @@ void ofApp::draw() {
 	//draw only leaf nodes
 	//kdtree.drawLeafNodes(kdtree.root);
 	
+	// draw landing effect here..
+	//
+	if (landing) {
+		ofSetColor(ofColor::white);
+		landingEmitter.draw();
+	}
+	
+	ofSetColor(ofColor::white);
+	explosion.draw();
 	
 	ofPopMatrix();
 
@@ -452,6 +543,9 @@ void ofApp::keyPressed(int key) {
 		savePicture();
 		break;
 	case 't':
+		landingEmitter.sys->reset();
+		landingEmitter.start();
+		landingSound.play();
 		break;
 	case 'u':
 		bdrawbox = !bdrawbox;
@@ -471,13 +565,15 @@ void ofApp::keyPressed(int key) {
 		angle -= 1;
 		break;
 	case 'w':     // spacecraft thrust UP
-		lemsys.addForce(new ThrusterForce(ofVec3f(0, 10, 0)));
-		lemEmit.start();
+		lemsys.addForce(new ThrusterForce(ofVec3f(0, 2, 0)));
+		lemEmit.sys->addForce(new ThrusterForce(ofVec3f(0, 1, 0)));
+		//lemEmit.start();
 		break;
 	case 's':     // spacefraft thrust DOWN
 				
-		lemsys.addForce(new ThrusterForce(ofVec3f(0, -10, 0)));
-		lemEmit.start();
+		lemsys.addForce(new ThrusterForce(ofVec3f(0, -2, 0)));
+		lemEmit.sys->addForce(new ThrusterForce(ofVec3f(0, 1, 0)));
+		//lemEmit.start();
 		break;
 	case OF_KEY_F1:
 		theCam = &cam;
@@ -491,8 +587,12 @@ void ofApp::keyPressed(int key) {
 		break;
 	case OF_KEY_CONTROL:
 		bCtrlKeyDown = true;
+		emitter.start();
 		break;
 	case OF_KEY_SHIFT:
+		explosion.sys->reset();
+		explosion.start();
+		explosionSound.play();
 		break;
 	case OF_KEY_DEL:
 		break;
@@ -500,25 +600,25 @@ void ofApp::keyPressed(int key) {
 		
 		lemsys.addForce(new ThrusterForce(ofVec3f(heading).rotate(angle, ofVec3f(0, 1, 0))));
 		lemEmit.start();
-		//landerMvmt.play();
+		landerMvmt.play();
 		break;
 	case OF_KEY_DOWN:   // move backward
 		
 		lemsys.addForce(new ThrusterForce(-ofVec3f(heading).rotate(angle, ofVec3f(0, 1, 0))));
 		lemEmit.start();
-		//landerMvmt.play();
+		landerMvmt.play();
 		break;
 	case OF_KEY_LEFT:   // move left
 		
 		lemsys.addForce(new ThrusterForce(-ofVec3f(heading).rotate(angle-90, ofVec3f(0, 1, 0))));
 		lemEmit.start();
-		//landerMvmt.play();
+		landerMvmt.play();
 		break;
 	case OF_KEY_RIGHT:   // move right
 		
 		lemsys.addForce(new ThrusterForce(ofVec3f(heading).rotate(angle-90, ofVec3f(0, 1, 0))));
 		lemEmit.start();
-		//landerMvmt.play();
+		landerMvmt.play();
 		break;
 	default:
 		break;
@@ -554,31 +654,31 @@ void ofApp::keyReleased(int key) {
 		break;
 	case 'w':     
 		lemEmit.stop();
-		//landerMvmt.stop();
+		landerMvmt.stop();
 		break;
 	case 's':     
 		lemEmit.stop();
-		//landerMvmt.stop();
+		landerMvmt.stop();
 		break;
 	case OF_KEY_UP:    // move forward
 		
 		lemEmit.stop();
-		//landerMvmt.stop();
+		landerMvmt.stop();
 		break;
 	case OF_KEY_DOWN:   // move backward
 		
 		lemEmit.stop();
-		//landerMvmt.stop();
+		landerMvmt.stop();
 		break;
 	case OF_KEY_LEFT:   // move left
 		
 		lemEmit.stop();
-		//landerMvmt.stop();
+		landerMvmt.stop();
 		break;
 	case OF_KEY_RIGHT:   // move right
 		
 		lemEmit.stop();
-		//landerMvmt.stop();
+		landerMvmt.stop();
 		break;
 	default:
 		break;
@@ -924,4 +1024,35 @@ glm::vec3 ofApp::getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm) {
 		return intersectPoint;
 	}
 	else return glm::vec3(0, 0, 0);
+}
+
+
+
+//  This a very simple function to check for collision on the ground plane at (0,0,0)
+//  If the partical position.y value is smaller than it's radius, we will assume
+//  it's has gone through the plane and we apply a simple impulse function
+//  resolve it..
+//
+void ofApp::checkCollisions() {
+
+	// for each particle, determine if we hit the groud plane.
+	//
+	for (int i = 0; i < emitter.sys->particles.size(); i++) {
+
+		// only bother to check for descending particles.
+		//
+		ofVec3f vel = emitter.sys->particles[i].velocity; // velocity of particle
+		if (vel.y >= 0) break;                             // ascending;
+
+		ofVec3f pos = emitter.sys->particles[i].position;
+
+		if (pos.y < emitter.sys->particles[i].radius) {
+
+			// apply impulse function
+			//
+			ofVec3f norm = ofVec3f(0, 1, 0);  // just use vertical for normal for now
+			ofVec3f f = (restitution + 1.0)*((-vel.dot(norm))*norm);
+			emitter.sys->particles[i].forces += ofGetFrameRate() * f;
+		}
+	}
 }

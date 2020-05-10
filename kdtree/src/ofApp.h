@@ -41,8 +41,10 @@ class ofApp : public ofBaseApp{
 		glm::vec3 getMousePointOnPlane();
 		glm::vec3 getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm);
 		bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
-		void dragEvent2(ofDragInfo dragInfo);
+		//void dragEvent2(ofDragInfo dragInfo);
 		void drawBox(const Box &box);
+		
+
 		Box meshBounds(const ofMesh &);
 		
 		ofEasyCam cam;
@@ -67,6 +69,13 @@ class ofApp : public ofBaseApp{
 		ParticleSystem lemsys;
 		//GravityForce gray;
 
+		ParticleEmitter landingEmitter;
+		ParticleEmitter explosion;
+		// adding forces
+		//
+		TurbulenceForce *turbForce;
+		GravityForce *gravityForce;
+		ImpulseRadialForce *radialForce;
 		TurbulenceForce tur1, tur2;
 
 		
@@ -107,9 +116,23 @@ class ofApp : public ofBaseApp{
 
 		// sound
 		ofSoundPlayer landerMvmt;
+		ofSoundPlayer landingSound;
+		ofSoundPlayer explosionSound;
+
 
 		// lighting variables 
 		ofLight landingArea1, landingArea2, landingArea3, areaLight, sunlight;
 		ofPlanePrimitive plane;
 		ofMaterial planeMaterial;
+
+		bool landing = false;
+		
+		ParticleEmitter emitter;
+		GravityForce grav;
+		ImpulseForce impulse;  // test for collisions;
+		float groundPlaneWidth = 100;
+		float groundPlaneHeight = 100;
+		float restitution = .85; 
+		void checkCollisions();
+		
 };
