@@ -3,13 +3,12 @@
 #include "ofMain.h"
 #include "ofxGui.h"
 #include  "ofxAssimpModelLoader.h"
+#include "Particle.h"
 #include "ParticleSystem.h"
 #include "ParticleEmitter.h"
 #include "box.h"
 #include "ray.h"
 #include "KdTree.h"
-
-
 
 
 class ofApp : public ofBaseApp{
@@ -36,21 +35,17 @@ class ofApp : public ofBaseApp{
 		void savePicture();
 		void toggleWireframeMode();
 		void togglePointsDisplay();
-		void toggleSelectTerrain();
-		void setCameraTarget();
-		glm::vec3 getMousePointOnPlane();
-		glm::vec3 getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm);
-		bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
-		//void dragEvent2(ofDragInfo dragInfo);
-		void drawBox(const Box &box);
+    glm::vec3 getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm);
+    void drawBox(const Box &box);
+    Box meshBounds(const ofMesh &);
+    void loadVbo();
 		
-
-		Box meshBounds(const ofMesh &);
-		
-		ofEasyCam cam;
+		// camera variables
+    ofEasyCam cam;
+		ofxAssimpModelLoader lander, terrain;
 		ofLight light;
 		ofImage backgroundImage;
-		ofCamera *theCam = NULL;
+		ofCamera *theCam;
 		ofCamera topCam;
 		
 		float angle;
@@ -63,76 +58,55 @@ class ofApp : public ofBaseApp{
 		ofxFloatSlider radius;
 		ofxFloatSlider rate;
 		ofxPanel gui;
-		bool bHide = false;
 		
 		ParticleEmitter lemEmit;
 		ParticleSystem lemsys;
 		//GravityForce gray;
 
-		ParticleEmitter landingEmitter;
-		ParticleEmitter explosion;
-		// adding forces
-		//
-		TurbulenceForce *turbForce;
-		GravityForce *gravityForce;
-		ImpulseRadialForce *radialForce;
 		TurbulenceForce tur1, tur2;
-
-		
-		bool bBackgroundLoaded = false;
-		bool bLanderLoaded = false;
-		bool bWireFrame = false;
-		bool bModelLoaded = false;
-		bool bPlaneLoaded = false;
+    
+    glm::vec3 mouseDownPos;
+    glm::vec3 mouseLastPos;
 
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
-		ofxAssimpModelLoader terrain, lander;
-		
-		Box boundingBox;
-		Box landerBounds;
-		bool bPointSelected;
+		bool bWireframe;
 		bool bDisplayPoints;
-		bool bTerrainSelected;
-		bool bLanderSelected = false;
-		bool bInDrag = false; 
-		ofVec3f selectedPoint;
-		ofVec3f intersectPoint;
-		KdTree kdtree;
-		vector<Box> bboxList;
-		glm::vec3 mouseDownPos;
-		glm::vec3 mouseLastPos;
-
-
-		ofxIntSlider level;
-		bool bdrawbox = false;
-		float starttime;
-		float endtime;
-		TreeNode hitNode;
-		bool bcheckhit = false;
-		bool intersect = false;
-		vector<Box> boxHitList;
-		bool collision = false;
-
-		// sound
-		ofSoundPlayer landerMvmt;
-		ofSoundPlayer landingSound;
-		ofSoundPlayer explosionSound;
-
-
-		// lighting variables 
-		ofLight landingArea1, landingArea2, landingArea3, areaLight, sunlight;
-		ofPlanePrimitive plane;
-		ofMaterial planeMaterial;
-
-		bool landing = false;
-		
-		ParticleEmitter emitter;
-		GravityForce grav;
-		ImpulseForce impulse;  // test for collisions;
-		float groundPlaneWidth = 100;
-		float groundPlaneHeight = 100;
-		float restitution = .85; 
-		void checkCollisions();
-		
+	
+		bool bBackgroundLoaded = false;
+		bool bLanderLoaded = false;
+    bool bLanderSelected = false;
+    bool bTerrainSelected;
+    bool bInDrag = false;
+    
+    Box boundingBox;
+    Box landerBounds;
+    
+    // sound
+    ofSoundPlayer landerMvmt;
+    
+    // lighting variables 
+    ofLight landingArea1, landingArea2, landingArea3, areaLight, sunlight;
+    ofPlanePrimitive plane;
+    ofMaterial planeMaterial;
+    
+    // kd tree vars 
+    ofxIntSlider level;
+    bool bdrawbox = false;
+    float starttime;
+    float endtime;
+    TreeNode hitNode;
+    bool bcheckhit = false;
+    bool intersect = false;
+    vector<Box> boxHitList;
+    bool collision = false;
+    KdTree kdtree;
+    vector<Box> bboxList;
+    
+    // textures
+    ofTexture  particleTex;
+    
+    // shaders
+    ofVbo vbo;
+    ofShader shader;
 };
