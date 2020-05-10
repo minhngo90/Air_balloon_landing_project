@@ -1,3 +1,4 @@
+#version 120
 #ifdef GL_ES
 // define default precision for float, vec, mat.
 precision highp float;
