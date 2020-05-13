@@ -96,7 +96,7 @@ int KdTree::getMeshPointsInBox(const ofMesh & mesh, const vector<int>& points,
 //
 void KdTree::subDivideBox(const Box &box, vector<Box> & boxList) {
 	
-	// octree
+	
 	Vector3 min = box.parameters[0];
 	Vector3 max = box.parameters[1];
 	Vector3 size = max - min;
@@ -106,6 +106,7 @@ void KdTree::subDivideBox(const Box &box, vector<Box> & boxList) {
 	float zdist = (max.z() - min.z()) / 2;
 	Vector3 h = Vector3(0, ydist, 0);
 
+	// octree
 	//  generate ground floor
 	//
 	Box b[8];
@@ -124,17 +125,11 @@ void KdTree::subDivideBox(const Box &box, vector<Box> & boxList) {
 		b[i] = Box(b[i - 4].min() + h, b[i - 4].max() + h);
 		boxList.push_back(b[i]);
 	}
-	
+
 	/*
-	//kdtree
-	Vector3 min = box.parameters[0];
-	Vector3 max = box.parameters[1];
-	Vector3 size = max - min;
-	Vector3 center = size / 2 + min;
-	float xdist = (max.x() - min.x()) / 2;
-	float ydist = (max.y() - min.y()) / 2;
-	float zdist = (max.z() - min.z()) / 2;
 	
+	//kdtree
+		
 	boxList.clear();
 	if (xdist >= ydist && xdist >= zdist) {
 		Box box1 = Box(min, Vector3((max.x() + min.x()) / 2, max.y(), max.z()));
@@ -185,17 +180,17 @@ void KdTree::subdivide(const ofMesh & mesh, TreeNode & node, int numLevels, int 
 	
 	vector<Box> boxList;
 	subDivideBox(node.box, boxList);
-	
 	level++;
 	
 	for (int i = 0; i < boxList.size(); i++) {
 		TreeNode child;
 		child.box = boxList[i];
-		node.children.push_back(child);
-		if (getMeshPointsInBox(mesh, node.points, node.children[i].box, node.children[i].points) > 0) {
-			
-			subdivide(mesh, node.children[i], numLevels, level);
+		
+		if (getMeshPointsInBox(mesh, node.points, child.box, child.points) > 0) {
+			subdivide(mesh, child, numLevels, level);
+			node.children.push_back(child);
 		}
+		
 	}
 	
 }
@@ -216,6 +211,8 @@ bool KdTree::intersect(const Ray &ray, const TreeNode & node, TreeNode & nodeRtn
 
 
 bool KdTree::intersect(const Box &box, TreeNode & node, vector<Box> & boxListRtn) {
+	
+		
 	for (int i = 0; i < node.children.size(); i++) {
 		if (node.children[i].children.size() == 0 && node.children[i].points.size() > 0) {
 			if (node.children[i].box.overlap(box)) {
@@ -223,7 +220,9 @@ bool KdTree::intersect(const Box &box, TreeNode & node, vector<Box> & boxListRtn
 				//cout << "hit leaf" << endl;
 				return true;
 			}
+			//return true;
 		}
 		bool hit = intersect(box, node.children[i], boxListRtn);
 	}
+	
 }
