@@ -31,53 +31,45 @@ void ofApp::setup() {
 	startGame = false;
 	gameOver = false;
 	scale = 0.5; // scale of the lander
-	
-	// load lander model
-	//
-	if (lander.loadModel("geo/BalloonRover.obj")) {
-		lander.setScaleNormalization(false);
-		lander.setScale(scale, scale, scale);
-		lander.setRotation(0, -180, 1, 0, 0);
-		lander.setPosition(lem.position.x, lem.position.y, lem.position.z);
-
-		bLanderLoaded = true;
-
-	}
-	else {
-		cout << "Error: Can't load model" << "geo/lander.obj" << endl;
-		ofExit(0);
-	}
 
 	cam.setDistance(10);
-	cam.setNearClip(.1);
-	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
-		
-	// top view cam
-	topCam.setNearClip(.1);
-	topCam.setFov(65.5);
-	topCam.setPosition(0, 25, 0);
-	topCam.lookAt(glm::vec3(0, 0, 0));
+    cam.setNearClip(.1);
+    cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
+        
+    // top view cam
+    topCam.setNearClip(.1);
+    topCam.setFov(65.5);
+    topCam.setPosition(0, 25, 0);
+    topCam.lookAt(glm::vec3(0, 0, 0));
 
-	// tracking camera looks at rover from a distance
-	trackCam.setNearClip(0.1);
-	trackCam.setFov(65.5);
-	trackCam.setPosition(5, 10, 15);
-	if (bLanderLoaded) trackCam.lookAt(lander.getPosition());
-	trackCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
+    // tracking camera looks at rover from a distance
+    trackCam.setNearClip(0.1);
+    trackCam.setFov(65.5);
+    trackCam.setPosition(5, 10, 15);
+    if (bLanderLoaded) trackCam.lookAt(lander.getPosition());
+    trackCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
 
-	// camera looking below air craft
-	onBoardCam.setNearClip(0.1);
-	onBoardCam.setFov(65.5);
-	//onBoardCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
-	if (bLanderLoaded)onBoardCam.setPosition(lander.getPosition());
-	onBoardCam.lookAt(glm::vec3(0, -1, 0));
-
+    // camera looking below air craft
+    onBoardCam.setNearClip(0.1);
+    onBoardCam.setFov(65.5);
+    //onBoardCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
+    if (bLanderLoaded)onBoardCam.setPosition(lander.getPosition());
+    onBoardCam.lookAt(glm::vec3(0, -1, 0));
+    
+    personCam.setNearClip(0.1);
+    personCam.setFov(65.5);
+    //onBoardCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
+    if (bLanderLoaded)personCam.setPosition(lander.getPosition());
+    personCam.lookAt(glm::vec3(0, 0, 1));
+    
+    
 	// set current camera;
 	//
 	theCam = &cam;
 	cam.disableMouseInput();
 	ofEnableSmoothing();
 	ofEnableDepthTest();
+    ofEnableLighting();
 
 	ofSetVerticalSync(true);
 
@@ -110,9 +102,9 @@ void ofApp::setup() {
 	landingArea1.setAttenuation(1, .001, .001);
 	landingArea1.setAmbientColor(ofFloatColor(0, 0, 1));
 	landingArea1.setDiffuseColor(ofColor(0, 0, 255));
-	landingArea1.setSpecularColor(ofColor(0, 0,255));
+	landingArea1.setSpecularColor(ofColor(0, 0, 255));
 	landingArea1.rotate(-90, ofVec3f(1, 0, 0));
-	landingArea1.setPosition(-9, 5, 8);
+	landingArea1.setPosition(-9, 5, 6);
 
 	// spot light for second landnig area
 	landingArea2.setup();
@@ -121,11 +113,11 @@ void ofApp::setup() {
 	landingArea2.setScale(.05);
 	landingArea2.setSpotlightCutOff(15);
 	landingArea2.setAttenuation(1, .001, .001);
-	landingArea2.setAmbientColor(ofFloatColor(0, 1, 0));
-	landingArea2.setDiffuseColor(ofColor(0, 255, 0));
-	landingArea2.setSpecularColor(ofColor(0, 255, 0));
+	landingArea2.setAmbientColor(ofFloatColor(0, 0, 1));
+	landingArea2.setDiffuseColor(ofColor(0, 0, 255));
+	landingArea2.setSpecularColor(ofColor(0, 0, 255));
 	landingArea2.rotate(-90, ofVec3f(1, 0, 0));
-	landingArea2.setPosition(-4, 5, 4);
+	landingArea2.setPosition(3, 5, 8);
 
 	// spot light for third landnig area
 	landingArea3.setup();
@@ -134,9 +126,9 @@ void ofApp::setup() {
 	landingArea3.setScale(.05);
 	landingArea3.setSpotlightCutOff(15);
 	landingArea3.setAttenuation(1, .001, .001);
-	landingArea3.setAmbientColor(ofFloatColor(0, 1, 0));
-	landingArea3.setDiffuseColor(ofColor(0, 255, 0));
-	landingArea3.setSpecularColor(ofColor(0, 255, 0));
+	landingArea3.setAmbientColor(ofFloatColor(0, 0, 1));
+	landingArea3.setDiffuseColor(ofColor(0, 0, 255));
+	landingArea3.setSpecularColor(ofColor(0, 0, 255));
 	landingArea3.rotate(-90, ofVec3f(1, 0, 0));
 	landingArea3.setPosition(-1, 5, -4);
 
@@ -172,6 +164,22 @@ void ofApp::setup() {
 	// setup rudimentary lighting 
 	//
 	initLightingAndMaterials();
+    
+    // load lander model
+    //
+    if (lander.loadModel("geo/BalloonRover.obj")) {
+        lander.setScaleNormalization(false);
+        lander.setScale(scale, scale, scale);
+        lander.setRotation(0, -180, 1, 0, 0);
+        lander.setPosition(lem.position.x, lem.position.y, lem.position.z);
+
+        bLanderLoaded = true;
+
+    }
+    else {
+        cout << "Error: Can't load model" << "geo/lander.obj" << endl;
+        ofExit(0);
+    }
 
 	// setup terrain model
 	terrain.loadModel("geo/EarthModel.obj");
@@ -289,252 +297,285 @@ void ofApp::setup() {
 
 void ofApp::update() {
 	
-	lemsys.update();
+    if (startGame) {
+        gameStart = ofGetElapsedTimeMillis();
+        cout << "Game Start: " << gameStart << endl;
+        lemsys.update();
 
-	//update emmitters
-	lemEmit.update();
-	lemEmit.setPosition(ofVec3f(lemsys.particles[0].position.x, lemsys.particles[0].position.y + 2 * scale, lemsys.particles[0].position.z));
+        //update emmitters
+        lemEmit.update();
+        lemEmit.setPosition(ofVec3f(lemsys.particles[0].position.x, lemsys.particles[0].position.y + 2 * scale, lemsys.particles[0].position.z));
 
-	if (!bInDrag) {
-				
-		// set position of lander as single lem particle
-		lander.setPosition(lemsys.particles[0].position.x, lemsys.particles[0].position.y, lemsys.particles[0].position.z);
-	}
+        if (!bInDrag) {
+                    
+            // set position of lander as single lem particle
+            lander.setPosition(lemsys.particles[0].position.x, lemsys.particles[0].position.y, lemsys.particles[0].position.z);
+        }
 
-	// check box intersect of lander and terrain
-	boxHitList.clear();
-	if (kdtree.intersect(landerBounds, kdtree.root, boxHitList)) {
-		intersect = true;
-	}
-	else intersect = false;
+        // check box intersect of lander and terrain
+        boxHitList.clear();
+        if (kdtree.intersect(landerBounds, kdtree.root, boxHitList)) {
+            intersect = true;
+        }
+        else intersect = false;
 
-	landingEmitter.setPosition(lander.getPosition());
-	if (bLanderLoaded) trackCam.lookAt(lander.getPosition());
-	if (bLanderLoaded) onBoardCam.setPosition(lander.getPosition());
-	// landing effect
-	if (landing) {
-		landingEmitter.update();
-	}
+        landingEmitter.setPosition(lander.getPosition());
+        if (bLanderLoaded) trackCam.lookAt(lander.getPosition());
+        if (bLanderLoaded) onBoardCam.setPosition(lander.getPosition());
+        if (bLanderLoaded) personCam.setPosition(lander.getPosition());
+        
+        // landing effect
+        if (landing) {
+            landingEmitter.update();
+        }
 
-	// explosion effect
-	explosion.setPosition(lander.getSceneCenter() + lander.getPosition());
-	explosion.update();
-	
-	lemEmit.start();
+        // explosion effect
+        explosion.setPosition(lander.getSceneCenter() + lander.getPosition());
+        explosion.update();
+        
+        lemEmit.start();
 
-	// check collision
-	checkCollisions();
-	grav.set(ofVec3f(0, -10, 0));
-		
-	// update objects you've created here
-	//emitter.update();
+        // check collision
+        checkCollisions();
+        grav.set(ofVec3f(0, -10, 0));
+            
+        // update objects you've created here
+        //emitter.update();
 
-	glm::vec3 p = onBoardCam.screenToWorld(glm::vec3(ofGetWindowWidth()/2, ofGetWindowHeight()/2, 0));
-	glm::vec3 rayDir = glm::normalize(p - onBoardCam.getPosition());
+        glm::vec3 p = onBoardCam.screenToWorld(glm::vec3(ofGetWindowWidth()/2, ofGetWindowHeight()/2, 0));
+        glm::vec3 rayDir = glm::normalize(p - onBoardCam.getPosition());
 
-	
-	//check intersect of the ray from onBoardCam with the leaf node
-	if (kdtree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), kdtree.root, hitNode)) {
-		altitude = lander.getPosition().y - hitNode.box.max().y();
-		if (checkAltitude) bPointSelected = true;
-	}
-	else bPointSelected = false;
+        
+        //check intersect of the ray from onBoardCam with the leaf node
+        if (kdtree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), kdtree.root, hitNode)) {
+            altitude = lander.getPosition().y - hitNode.box.max().y();
+            if (checkAltitude) bPointSelected = true;
+        }
+        else bPointSelected = false;
+    }
 	
 
 }
 
 //--------------------------------------------------------------
 void ofApp::draw() {
-	loadVbo();
-	// draw background image
-	//
-	if (bBackgroundLoaded) {
-		ofPushMatrix();
-		ofDisableDepthTest();
-		ofSetColor(50, 50, 50);
-		ofScale(2, 2);
-		//backgroundImage.draw(-200, -100);
-		backgroundImage.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
-		ofEnableDepthTest();
-		ofPopMatrix();
-	}
-	ofEnableDepthTest();
-	
+    
+    // background color
+    ofBackground(32, 32, 32);
+    
+    // draw a string on screen for directions
+    ofSetColor(0, 128, 255);
+    
+    ofDrawBitmapString("SAVE YOURSELF FROM THE FIGHT WITHIN CONTINENTS!", ofGetWindowWidth() /2, ofGetWindowHeight()/2);
+    ofDrawBitmapString("GET TO THE SAFE AREAS HIGHLIGHTED WITHIN 4 MINUTES", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 30);
+    ofDrawBitmapString("OR ELSE....", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 60);
+    ofDrawBitmapString("USE ARROW KEYS TO MOVE YOUR CRAFT", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 90);
+    ofDrawBitmapString("GOOD LUCK AND MAY THE ODDS BE IN YOUR FAVOR", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 120);
+    ofDrawBitmapString("PRESS SPACE BAR TO START GAME!", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 180);
+    
+    if (startGame) {
+        loadVbo();
+            // draw background image
+            //
+            if (bBackgroundLoaded) {
+                ofPushMatrix();
+                ofDisableDepthTest();
+                ofSetColor(50, 50, 50);
+                ofScale(2, 2);
+                //backgroundImage.draw(-200, -100);
+                backgroundImage.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+                ofEnableDepthTest();
+                ofPopMatrix();
+            }
+            ofEnableDepthTest();
+            
 
-	ofSetColor(ofColor::white);
+            ofSetColor(ofColor::white);
 
-	theCam->begin();
+            theCam->begin();
 
-	ofPushMatrix();
+            ofPushMatrix();
 
-	// draw the lights
-    //landingArea1.draw();
-    //landingArea2.draw();
-    //landingArea3.draw();
-    //areaLight.draw();
-    //sunlight.draw();
+            // draw the lights
+            //landingArea1.draw();
+            //landingArea2.draw();
+            //landingArea3.draw();
+            //areaLight.draw();
+            //sunlight.draw();
 
-		// draw a reference grid
-		//
-	/*
-		ofPushMatrix();
-		ofRotate(90, 0, 0, 1);
-		ofSetLineWidth(1);
-		ofSetColor(ofColor::dimGray);
-		ofDisableLighting();
-		ofDrawGridPlane();
-		ofPopMatrix();
-		*/
-	if (bWireFrame) {                    // wireframe mode  (include axis)
-		ofDisableLighting();
-		ofSetColor(ofColor::slateGray);
-		terrain.drawWireframe();
-		if (bLanderLoaded) {
+                // draw a reference grid
+                //
+            /*
+                ofPushMatrix();
+                ofRotate(90, 0, 0, 1);
+                ofSetLineWidth(1);
+                ofSetColor(ofColor::dimGray);
+                ofDisableLighting();
+                ofDrawGridPlane();
+                ofPopMatrix();
+                */
+            if (bWireFrame) {                    // wireframe mode  (include axis)
+                ofDisableLighting();
+                ofSetColor(ofColor::slateGray);
+                terrain.drawWireframe();
+                if (bLanderLoaded) {
 
-			//  Note this is how to rotate LEM model about the "Y" or "UP" axis
-			//
-			
-			lander.setRotation(0, angle, 0, 1, 0);    
-			lander.drawWireframe();
-			if (!bTerrainSelected) drawAxis(lander.getPosition());
-		}
-		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
-	}
-	else {
-		ofEnableLighting();              // shaded mode
-		terrain.drawFaces();
-		if (bLanderLoaded) {
-			lander.setRotation(0, angle, 0, 1, 0);
-			lander.drawFaces();
-			if (!bTerrainSelected) drawAxis(lander.getPosition());
+                    //  Note this is how to rotate LEM model about the "Y" or "UP" axis
+                    //
+                    
+                    lander.setRotation(0, angle, 0, 1, 0);
+                    lander.drawWireframe();
+                    if (!bTerrainSelected) drawAxis(lander.getPosition());
+                }
+                if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+            }
+            else {
+                ofEnableLighting();              // shaded mode
+                terrain.drawFaces();
+                if (bLanderLoaded) {
+                    lander.setRotation(0, angle, 0, 1, 0);
+                    lander.drawFaces();
+                    if (!bTerrainSelected) drawAxis(lander.getPosition());
 
-			ofVec3f min = lander.getSceneMin()*scale + lander.getPosition();
-			ofVec3f max = lander.getSceneMax()*scale + lander.getPosition();
+                    ofVec3f min = lander.getSceneMin()*scale + lander.getPosition();
+                    ofVec3f max = lander.getSceneMax()*scale + lander.getPosition();
 
-			Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+                    Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
 
-			landerBounds = bounds;
+                    landerBounds = bounds;
 
-			// set color of bounding box based on selection status
-			//
-			if (bLanderSelected) ofSetColor(ofColor::red);
-			else ofSetColor(ofColor::white);
-			ofNoFill();
-			drawBox(bounds);
-			ofFill();
-		}
-		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
-	}
+                    // set color of bounding box based on selection status
+                    //
+                    if (bLanderSelected) ofSetColor(ofColor::red);
+                    else ofSetColor(ofColor::white);
+                    ofNoFill();
+                    drawBox(bounds);
+                    ofFill();
+                }
+                if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+            }
 
-	//lemsys.draw();
-		
-	// add shader effect to fire inside of hot air balloon
-	glDepthMask(GL_FALSE);
+            //lemsys.draw();
+        //    personCam.draw();
+        //    onBoardCam.draw();
+                
+            // add shader effect to fire inside of hot air balloon
+            glDepthMask(GL_FALSE);
 
-	ofSetColor(255, 100, 90);
+            ofSetColor(255, 100, 90);
 
-	// this makes everything look glowy :)
-	//
-	ofEnableBlendMode(OF_BLENDMODE_ADD);
-	ofEnablePointSprites();
-	
-	// begin drawing in the camera
-	//
-	shader.begin();
-	//cam.begin();
-	//trackCam.begin();
-	//topCam.begin();
+            // this makes everything look glowy :)
+            //
+            ofEnableBlendMode(OF_BLENDMODE_ADD);
+            ofEnablePointSprites();
+            
+            // begin drawing in the camera
+            //
+            shader.begin();
+            //cam.begin();
+            //trackCam.begin();
+            //topCam.begin();
 
-	// draw particle emitter here..
-	//
-	particleTex.bind();
-	vbo.draw(GL_POINTS, 0, (int)lemEmit.sys->particles.size());
-	particleTex.unbind();
-	lemEmit.draw();
-	
-	//  end drawing in the camera
-	//
-	//cam.end();
-	//trackCam.end();
-	//topCam.begin();
-	shader.end();
+            // draw particle emitter here..
+            //
+            particleTex.bind();
+            vbo.draw(GL_POINTS, 0, (int)lemEmit.sys->particles.size());
+            particleTex.unbind();
+            lemEmit.draw();
+            
+            //  end drawing in the camera
+            //
+            //cam.end();
+            //trackCam.end();
+            //topCam.begin();
+            shader.end();
 
-	ofDisablePointSprites();
-	ofDisableBlendMode();
-	ofEnableAlphaBlending();
+            ofDisablePointSprites();
+            ofDisableBlendMode();
+            ofEnableAlphaBlending();
 
-	// set back the depth mask
-	//
-	glDepthMask(GL_TRUE);
-	
-	if (bDisplayPoints) {                // display points as an option    
-		glPointSize(3);
-		ofSetColor(ofColor::green);
-		terrain.drawVertices();
-	}
+            // set back the depth mask
+            //
+            glDepthMask(GL_TRUE);
+            
+            if (bDisplayPoints) {                // display points as an option
+                glPointSize(3);
+                ofSetColor(ofColor::green);
+                terrain.drawVertices();
+            }
 
-	// highlight selected point (draw sphere around selected point)
-	//
-	if (bPointSelected) {
-		ofSetColor(ofColor::blue);
-		ofDrawSphere(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z(), .1);
-	}
+            // highlight selected point (draw sphere around selected point)
+            //
+            if (bPointSelected) {
+                ofSetColor(ofColor::blue);
+                ofDrawSphere(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z(), .1);
+            }
 
-	if (intersect) {
-		ofNoFill();
-		ofSetColor(ofColor::white);
-		for (int i = 0; i < boxHitList.size(); i++) {
-			drawBox(boxHitList[i]);
-		}		
-		ofFill();
-	}
-	
-	//emitter.draw(); test impulse effects
-		
-	if (bdrawbox) {
-		ofNoFill();
-		ofSetColor(ofColor::white);
-		
-		//draw all the box
-		//kdtree.draw(level, 0);
-		
-		//draw only leaf nodes
-		kdtree.drawLeafNodes(kdtree.root);	
-		ofFill();
-	}
-	
-	// draw landing effect here..
-	//
-	if (landing) {
-		ofSetColor(ofColor::white);
-		landingEmitter.draw();
-	}
-	
-	ofSetColor(ofColor::white);
-	explosion.draw();
-		
-	ofPopMatrix();
+            if (intersect) {
+                ofNoFill();
+                ofSetColor(ofColor::white);
+                for (int i = 0; i < boxHitList.size(); i++) {
+                    drawBox(boxHitList[i]);
+                }
+                ofFill();
+            }
+            
+            //emitter.draw(); test impulse effects
+                
+            if (bdrawbox) {
+                ofNoFill();
+                ofSetColor(ofColor::white);
+                
+                //draw all the box
+                //kdtree.draw(level, 0);
+                
+                //draw only leaf nodes
+                kdtree.drawLeafNodes(kdtree.root);
+                ofFill();
+            }
+            
+            // draw landing effect here..
+            //
+            if (landing) {
+                ofSetColor(ofColor::white);
+                landingEmitter.draw();
+            }
+            
+            ofSetColor(ofColor::white);
+            explosion.draw();
+                
+            ofPopMatrix();
 
-	theCam->end();
-	
-	ofDisableDepthTest();
-	
-	// draw screen data
-	//
-	string str;
-	str += "Frame Rate: " + std::to_string(ofGetFrameRate());
-	ofSetColor(ofColor::white);
-	ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
+            theCam->end();
+            
+            ofDisableDepthTest();
+            
+            // draw screen data
+            //
+            string str;
+            str += "Frame Rate: " + std::to_string(ofGetFrameRate());
+            ofSetColor(ofColor::white);
+            ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
 
-	string str2;
-	str2 += "Altitude (AGL): " + std::to_string(altitude);
-	ofSetColor(ofColor::white);
-	ofDrawBitmapString(str2, 5, 15);
-	
-	//draw gui pannel
-	if (bHide) {
-		gui.draw();
-	}
+            string str2;
+            str2 += "Altitude (AGL): " + std::to_string(altitude);
+            ofSetColor(ofColor::white);
+            ofDrawBitmapString(str2, 5, 15);
+            
+            //draw gui pannel
+            if (bHide) {
+                gui.draw();
+            }
+    }
+    
+    if (gameStart > 240 * 1000) {
+        // background color
+        ofBackground(32, 32, 32);
+               
+        // draw a string on screen for directions
+        ofSetColor(218, 165, 32);
+        ofDrawBitmapString("MAY YOU REST IN PEACE MY FRIEND. BETTER LUCK NEXT TIME!", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2));
+    }
 
 }
 
@@ -568,6 +609,9 @@ void ofApp::drawAxis(ofVec3f location) {
 void ofApp::keyPressed(int key) {
 
 	switch (key) {
+        case ' ':
+//            gameStart = ofGetElapsedTimef();
+            startGame = true;
 	case 'C':
 	case 'c':
 		if (cam.getMouseInputEnabled()) cam.disableMouseInput();
@@ -636,6 +680,10 @@ void ofApp::keyPressed(int key) {
 		break;
 	case OF_KEY_F4:
 		theCam = &onBoardCam;
+//            bOnBoardCam = true;
+        case OF_KEY_F5:
+            theCam = &personCam;
+//            bPersonCam = true;
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
 		bAltKeyDown = true;
@@ -736,6 +784,10 @@ void ofApp::keyReleased(int key) {
 		//lemEmit.stop();
 		landerMvmt.stop();
 		break;
+//            case OF_KEY_F4:
+//                bOnBoardCam = false;
+//            case OF_KEY_F5:
+//                bPersonCam = false;
 	default:
 		break;
 

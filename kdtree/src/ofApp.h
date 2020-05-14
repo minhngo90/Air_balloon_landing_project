@@ -53,6 +53,7 @@ class ofApp : public ofBaseApp{
 		ofCamera topCam;
 		ofCamera trackCam;
 		ofCamera onBoardCam;
+    ofCamera personCam;
 		
 		ofLight light;
 		ofImage backgroundImage;
@@ -88,6 +89,8 @@ class ofApp : public ofBaseApp{
 		bool bWireFrame = false;
 		bool bModelLoaded = false;
 		bool bPlaneLoaded = false;
+    bool bPersonCam = false;
+    bool bOnBoardCam = false;
 
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
@@ -149,5 +152,6 @@ class ofApp : public ofBaseApp{
 		bool checkAltitude;
 		bool gameOver;
 		bool startGame;
+    float gameStart;
 		
 };
