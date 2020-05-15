@@ -16,6 +16,8 @@
 //
 void ofApp::setup() {
 
+	
+
 	// setup bool variables
 	bWireFrame = false;
 	bDisplayPoints = false;
@@ -30,47 +32,98 @@ void ofApp::setup() {
 	collision = false;
 	startGame = false;
 	gameOver = false;
+	gameStart = 0;
+	life = 100;
 	scale = 0.5; // scale of the lander
+	
+	// setup LEM
+	//
+	lemsys.particles.clear();
+	lemEmit.sys->particles.clear();
+	explosion.sys->particles.clear();
+	landingEmitter.sys->particles.clear();
+
+	lem.acceleration.set(0, 0, 0);
+	lem.forces.set(0, 0, 0);
+	lem.velocity.set(0, 0, 0);
+	lem.position.set(0, 2, 0);
+	lem.lifespan = 10000;
+	lem.radius = 0;
+	lem.damping = .99;
+	lem.mass = 1;
+	lemsys.add(lem);
+	//lemsys.addForce(new GravityForce(ofVec3f(0, -10, 0)));
+	//lemsys.addForce(new ThrusterForce(ofVec3f(0, 10, 0)));
+
+
+	//set up thurster emmitter
+	lemEmit.type = DiscEmitter; //Disc Emitter type
+	lemEmit.radius = .2*scale;
+	lemEmit.setVelocity(ofVec3f(0, 1 * scale, 0));
+	lemEmit.setParticleRadius(0.01*scale);
+	lemEmit.setGroupSize(50);
+	lemEmit.setPosition(ofVec3f(lemsys.particles[0].position.x, lemsys.particles[0].position.y + 2 * scale, lemsys.particles[0].position.z));
+	lemEmit.setRate(100);
+	lemEmit.setLifespan(1);
+	lemEmit.sys->addForce(new GravityForce(ofVec3f(0, 2, 0)));
+	lemEmit.sys->addForce(new TurbulenceForce(ofVec3f(-1, -1, -1), ofVec3f(1, 1, 1)));
+	
+	angle = 0;
+	heading = 0.1 * ofVec3f(0, 0, -1);
+
+	// load lander model
+	//
+	if (lander.loadModel("geo/BalloonRover.obj")) {
+		lander.setScaleNormalization(false);
+		lander.setScale(scale, scale, scale);
+		lander.setRotation(0, -180, 1, 0, 0);
+		lander.setPosition(lem.position.x, lem.position.y, lem.position.z);
+
+		bLanderLoaded = true;
+
+	}
+	else {
+		cout << "Error: Can't load model" << "geo/lander.obj" << endl;
+		ofExit(0);
+	}
+
 
 	cam.setDistance(10);
-    cam.setNearClip(.1);
-    cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
-        
-    // top view cam
-    topCam.setNearClip(.1);
-    topCam.setFov(65.5);
-    topCam.setPosition(0, 25, 0);
-    topCam.lookAt(glm::vec3(0, 0, 0));
+	cam.setNearClip(.1);
+	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
+		
+	// top view cam
+	topCam.setNearClip(.1);
+	topCam.setFov(65.5);
+	topCam.setPosition(0, 25, 0);
+	topCam.lookAt(glm::vec3(0, 0, 0));
 
-    // tracking camera looks at rover from a distance
-    trackCam.setNearClip(0.1);
-    trackCam.setFov(65.5);
-    trackCam.setPosition(5, 10, 15);
-    if (bLanderLoaded) trackCam.lookAt(lander.getPosition());
-    trackCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
+	// tracking camera looks at rover from a distance
+	trackCam.setNearClip(0.1);
+	trackCam.setFov(65.5);
+	trackCam.setPosition(5, 10, 15);
+	if (bLanderLoaded) trackCam.lookAt(lander.getPosition());
+	trackCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
 
-    // camera looking below air craft
-    onBoardCam.setNearClip(0.1);
-    onBoardCam.setFov(65.5);
-    //onBoardCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
-    if (bLanderLoaded)onBoardCam.setPosition(lander.getPosition());
-    onBoardCam.lookAt(glm::vec3(0, -1, 0));
-    
-    personCam.setNearClip(0.1);
-    personCam.setFov(65.5);
-    //onBoardCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
-    if (bLanderLoaded)personCam.setPosition(lander.getPosition());
-    personCam.lookAt(glm::vec3(0, 0, 1));
-    
-    
+	// camera looking below air craft
+	onBoardCam.setNearClip(0.1);
+	onBoardCam.setFov(65.5);
+	//onBoardCam.lookAt(ofVec3f(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z));
+	if (bLanderLoaded)onBoardCam.setPosition(lander.getPosition());
+	onBoardCam.lookAt(glm::vec3(0, -1, 0));
+
+	personCam.setNearClip(0.1);
+	personCam.setFov(65.5);
+	if (bLanderLoaded)personCam.setPosition(lander.getPosition() + ofVec3f(0, 2*scale, 0));
+	personCam.lookAt(lander.getPosition()+ ofVec3f(0, 0, -1).rotate(angle, ofVec3f(0, 1, 0)));
+
 	// set current camera;
 	//
 	theCam = &cam;
 	cam.disableMouseInput();
 	ofEnableSmoothing();
 	ofEnableDepthTest();
-    ofEnableLighting();
-
+	ofEnableLighting();
 	ofSetVerticalSync(true);
 
 	
@@ -102,9 +155,9 @@ void ofApp::setup() {
 	landingArea1.setAttenuation(1, .001, .001);
 	landingArea1.setAmbientColor(ofFloatColor(0, 0, 1));
 	landingArea1.setDiffuseColor(ofColor(0, 0, 255));
-	landingArea1.setSpecularColor(ofColor(0, 0, 255));
+	landingArea1.setSpecularColor(ofColor(0, 0,255));
 	landingArea1.rotate(-90, ofVec3f(1, 0, 0));
-	landingArea1.setPosition(-9, 5, 6);
+	landingArea1.setPosition(-9, 5, 6); 
 
 	// spot light for second landnig area
 	landingArea2.setup();
@@ -113,11 +166,11 @@ void ofApp::setup() {
 	landingArea2.setScale(.05);
 	landingArea2.setSpotlightCutOff(15);
 	landingArea2.setAttenuation(1, .001, .001);
-	landingArea2.setAmbientColor(ofFloatColor(0, 0, 1));
-	landingArea2.setDiffuseColor(ofColor(0, 0, 255));
-	landingArea2.setSpecularColor(ofColor(0, 0, 255));
+	landingArea2.setAmbientColor(ofFloatColor(0, 1, 0));
+	landingArea2.setDiffuseColor(ofColor(255, 0, 0));
+	landingArea2.setSpecularColor(ofColor(255, 0, 0));
 	landingArea2.rotate(-90, ofVec3f(1, 0, 0));
-	landingArea2.setPosition(3, 5, 8);
+	landingArea2.setPosition(3, 5, 8); 
 
 	// spot light for third landnig area
 	landingArea3.setup();
@@ -126,11 +179,11 @@ void ofApp::setup() {
 	landingArea3.setScale(.05);
 	landingArea3.setSpotlightCutOff(15);
 	landingArea3.setAttenuation(1, .001, .001);
-	landingArea3.setAmbientColor(ofFloatColor(0, 0, 1));
-	landingArea3.setDiffuseColor(ofColor(0, 0, 255));
-	landingArea3.setSpecularColor(ofColor(0, 0, 255));
+	landingArea3.setAmbientColor(ofFloatColor(0, 1, 0));
+	landingArea3.setDiffuseColor(ofColor(0, 255, 0));
+	landingArea3.setSpecularColor(ofColor(0, 255, 0));
 	landingArea3.rotate(-90, ofVec3f(1, 0, 0));
-	landingArea3.setPosition(-1, 5, -4);
+	landingArea3.setPosition(-1, 5, -4); // landing area 1 position (-1,0,-4) radius = 18
 
 	// create a directional sunlight onto the entire area 
 	areaLight.setup();
@@ -156,6 +209,24 @@ void ofApp::setup() {
 	sunlight.rotate(45, ofVec3f(1, 0, 0));
 	sunlight.setPosition(15, 15, -15);
 
+	// set up landing areas
+	area1.setRadius(1.6);
+	area1.setPosition( - 9, -1.14791, 6);
+	//area1.enableColors();
+	
+	area2.setRadius(1.6);
+	area2.setPosition(3, -1.14791, 8);
+	//area2.enableColors();
+	
+	area3.setRadius(1.6);
+	area3.setPosition(-1, -1.14791, -4);
+	//area3.enableColors();
+	
+	areas.push_back(area1);
+	areas.push_back(area2);
+	areas.push_back(area3);
+	
+
 	// load BG image
 	//
 	//bBackgroundLoaded = backgroundImage.load("images/starfield-plain.jpg");
@@ -164,22 +235,6 @@ void ofApp::setup() {
 	// setup rudimentary lighting 
 	//
 	initLightingAndMaterials();
-    
-    // load lander model
-    //
-    if (lander.loadModel("geo/BalloonRover.obj")) {
-        lander.setScaleNormalization(false);
-        lander.setScale(scale, scale, scale);
-        lander.setRotation(0, -180, 1, 0, 0);
-        lander.setPosition(lem.position.x, lem.position.y, lem.position.z);
-
-        bLanderLoaded = true;
-
-    }
-    else {
-        cout << "Error: Can't load model" << "geo/lander.obj" << endl;
-        ofExit(0);
-    }
 
 	// setup terrain model
 	terrain.loadModel("geo/EarthModel.obj");
@@ -187,46 +242,21 @@ void ofApp::setup() {
 	
 	boundingBox = meshBounds(terrain.getMesh(0));
 	
-	// setup LEM
-	//
-	lem.acceleration.set(0, 0, 0);
-	lem.forces.set(0, 0, 0);
-	lem.velocity.set(0, 0, 0);
-	lem.position.set(0, 5, 0);
-	lem.lifespan =10000;
-	lem.radius = 0;
-	lem.damping = .99;
-	lem.mass = 1;
-	lemsys.add(lem);
-	//lemsys.addForce(new GravityForce(ofVec3f(0, -10, 0)));
-	//lemsys.addForce(new ThrusterForce(ofVec3f(0, 10, 0)));
-
-
-	//set up thurster emmitter
-	lemEmit.type = DiscEmitter; //Disc Emitter type
-	lemEmit.radius = .2*scale;
-	lemEmit.setVelocity(ofVec3f(0, 1*scale, 0));
-	lemEmit.setParticleRadius(0.01*scale);
-	lemEmit.setGroupSize(50);
 	
-	lemEmit.setRate(100);
-	lemEmit.setLifespan(1);
-	lemEmit.sys->addForce(new GravityForce(ofVec3f(0, 2, 0)));
-	lemEmit.sys->addForce(new TurbulenceForce(ofVec3f(-1, -1, -1), ofVec3f(1, 1, 1)));
-	
-	
-	angle = 0;
-	heading = 1*ofVec3f(0,0,-1);
 
 	// sounds for thruster movement
 	landerMvmt.load("sounds/landerMvmt.mp3");
 
-	//set up explosion sound of the ship
+	//set up explosion sound of the lander
 	explosionSound.load("sounds/blast.mp3");
 
-	//set up landing sound of the ship
+	//set up landing sound of the lander
 	landingSound.load("sounds/opening.mp3");
 
+	//set up landing sound of the ship
+	backgroundSound.load("sounds/bakgroundMusic.mp3");
+	backgroundSound.setLoop(true);
+	backgroundSound.play();
 	 
 	// Set up GUI 
 	gui.setup();
@@ -251,17 +281,17 @@ void ofApp::setup() {
 	landingEmitter.sys->addForce(turbForce);
 	landingEmitter.sys->addForce(gravityForce);
 	landingEmitter.sys->addForce(radialForce);
-	landingEmitter.setVelocity(ofVec3f(0, 1, 0));
+	landingEmitter.setVelocity(ofVec3f(0, .1, 0));
 	landingEmitter.setOneShot(true);
 	landingEmitter.setEmitterType(RadialEmitter);
-	landingEmitter.setGroupSize(5000);
+	landingEmitter.setGroupSize(1000);
 	landingEmitter.setPosition(lander.getPosition());
-	landingEmitter.setLifespan(1);
-	landingEmitter.setRate(15);
+	landingEmitter.setLifespan(.5);
+	landingEmitter.setRate(5);
 	landingEmitter.setParticleRadius(0.01);
 	landingEmitter.visible = false;
-
-	landing = true;
+	landingEmitter.particleColor = ofColor::whiteSmoke;
+	landing = false;
 
 	explosion.sys->addForce(new TurbulenceForce(ofVec3f(-20, -20, -20), ofVec3f(20, 20, 20)));
 	explosion.sys->addForce(gravityForce);
@@ -275,8 +305,25 @@ void ofApp::setup() {
 	explosion.setRate(5);
 	explosion.setParticleRadius(.05);
 	explosion.visible = false;
+	explosion.particleColor = ofColor::whiteSmoke;
 
 
+	// check collision
+	//checkCollisions();
+	//check intersect of the ray from onBoardCam with the leaf node
+	glm::vec3 p = onBoardCam.screenToWorld(glm::vec3(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2, 0));
+	glm::vec3 rayDir = glm::normalize(p - onBoardCam.getPosition());
+
+	if (kdtree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), kdtree.root, hitNode)) {
+		cout << hitNode.box.max().y() << endl;
+		altitude = lander.getPosition().y - hitNode.box.max().y();
+		if (checkAltitude) {
+			bPointSelected = true;
+			//cout<< hitNode.box.center().x()<< ";" <<hitNode.box.center().y()<< ";" << hitNode.box.center().z() << endl;
+		}
+		else bPointSelected = false;
+	}
+	else bPointSelected = false;
 	//test collision
 	//emitter.setRate(1);
 	//emitter.setOneShot(true);
@@ -285,300 +332,417 @@ void ofApp::setup() {
 	//emitter.setLifespan(10);
 	
 	//ParticleSystem *sys = emitter.sys;
-	grav.set(ofVec3f(0, -1.0, 0));
+	//grav.set(ofVec3f(0, -1.0, 0));
 	
 	//sys->addForce(&grav);
 	//sys->addForce(new TurbulenceForce(ofVec3f(-3, -1, -1), ofVec3f(3, 1, 1)));
 }
 
-
-
-
-
 void ofApp::update() {
 	
-    if (startGame) {
-        gameStart = ofGetElapsedTimeMillis();
-        cout << "Game Start: " << gameStart << endl;
-        lemsys.update();
 
-        //update emmitters
-        lemEmit.update();
-        lemEmit.setPosition(ofVec3f(lemsys.particles[0].position.x, lemsys.particles[0].position.y + 2 * scale, lemsys.particles[0].position.z));
+	if (startGame) {
+		//gameStart = ofGetElapsedTimeMillis();
+		//cout << "Game Start: " << gameStart << endl;
+		lemsys.update();
 
-        if (!bInDrag) {
-                    
-            // set position of lander as single lem particle
-            lander.setPosition(lemsys.particles[0].position.x, lemsys.particles[0].position.y, lemsys.particles[0].position.z);
-        }
+		if (!bInDrag) {
+			// set position of lander as single lem particle
+			lander.setPosition(lemsys.particles[0].position.x, lemsys.particles[0].position.y, lemsys.particles[0].position.z);
+		}
 
-        // check box intersect of lander and terrain
-        boxHitList.clear();
-        if (kdtree.intersect(landerBounds, kdtree.root, boxHitList)) {
-            intersect = true;
-        }
-        else intersect = false;
+		if (bLanderLoaded) {
+			trackCam.lookAt(lander.getPosition());
+			onBoardCam.setPosition(lander.getPosition());
+			onBoardCam.lookAt(lander.getPosition() + ofVec3f(0, -1, 0));
+			personCam.setPosition(lander.getPosition() + ofVec3f(0, 2 * scale, 0));
+			personCam.lookAt(lander.getPosition() + ofVec3f(0, 0, -1).rotate(angle, ofVec3f(0, 1, 0)));
+		}
 
-        landingEmitter.setPosition(lander.getPosition());
-        if (bLanderLoaded) trackCam.lookAt(lander.getPosition());
-        if (bLanderLoaded) onBoardCam.setPosition(lander.getPosition());
-        if (bLanderLoaded) personCam.setPosition(lander.getPosition());
-        
-        // landing effect
-        if (landing) {
-            landingEmitter.update();
-        }
+		//check intersect of the ray from onBoardCam with the leaf node
+		glm::vec3 p = onBoardCam.screenToWorld(glm::vec3(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2, 0));
+		glm::vec3 rayDir = glm::normalize(p - onBoardCam.getPosition());
 
-        // explosion effect
-        explosion.setPosition(lander.getSceneCenter() + lander.getPosition());
-        explosion.update();
-        
-        lemEmit.start();
+		if (kdtree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), kdtree.root, hitNode)) {
+			altitude = lander.getPosition().y - hitNode.box.max().y();
+			if (checkAltitude) {
+				bPointSelected = true;
+				//cout<< hitNode.box.center().x()<< ";" <<hitNode.box.center().y()<< ";" << hitNode.box.center().z() << endl;
+			}
+			else bPointSelected = false;
+		}
+		else bPointSelected = false;
 
-        // check collision
-        checkCollisions();
-        grav.set(ofVec3f(0, -10, 0));
-            
-        // update objects you've created here
-        //emitter.update();
+		//update fire emmitters
+		lemEmit.update();
+		lemEmit.setPosition(ofVec3f(lemsys.particles[0].position.x, lemsys.particles[0].position.y + 2 * scale, lemsys.particles[0].position.z));
+		lemEmit.start();
 
-        glm::vec3 p = onBoardCam.screenToWorld(glm::vec3(ofGetWindowWidth()/2, ofGetWindowHeight()/2, 0));
-        glm::vec3 rayDir = glm::normalize(p - onBoardCam.getPosition());
+		
+		landingEmitter.setPosition(lander.getPosition());
+		landingEmitter.update();
+		// landing effect
+		checkLanding();
+		
 
-        
-        //check intersect of the ray from onBoardCam with the leaf node
-        if (kdtree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), kdtree.root, hitNode)) {
-            altitude = lander.getPosition().y - hitNode.box.max().y();
-            if (checkAltitude) bPointSelected = true;
-        }
-        else bPointSelected = false;
-    }
-	
+		// explosion effect
+		explosion.setPosition(lander.getSceneCenter()*scale + lander.getPosition());
+		explosion.update();
 
+		// check collision
+		checkCollisions();
+		grav.set(ofVec3f(0, -10, 0));
+		
+					
+		if (life == 0) {
+			explosion.sys->reset();
+			explosion.start();
+			explosionSound.play();
+			life = -1;
+			//lemEmit.sys->forces.clear();
+		}
+
+		gameTime = ofGetElapsedTimeMillis() - gameStart;
+		if ((gameTime > 240 * 1000 && landing == false) || life < 0) {
+			gameOver = true;
+			//cout << "gameOver : " << gameOver << endl;
+		}
+
+	}
 }
 
 //--------------------------------------------------------------
 void ofApp::draw() {
-    
-    // background color
-    ofBackground(32, 32, 32);
-    
-    // draw a string on screen for directions
-    ofSetColor(0, 128, 255);
-    
-    ofDrawBitmapString("SAVE YOURSELF FROM THE FIGHT WITHIN CONTINENTS!", ofGetWindowWidth() /2, ofGetWindowHeight()/2);
-    ofDrawBitmapString("GET TO THE SAFE AREAS HIGHLIGHTED WITHIN 4 MINUTES", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 30);
-    ofDrawBitmapString("OR ELSE....", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 60);
-    ofDrawBitmapString("USE ARROW KEYS TO MOVE YOUR CRAFT", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 90);
-    ofDrawBitmapString("GOOD LUCK AND MAY THE ODDS BE IN YOUR FAVOR", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 120);
-    ofDrawBitmapString("PRESS SPACE BAR TO START GAME!", ofGetWindowWidth() /2, ofGetWindowHeight()/2 + 180);
-    
-    if (startGame) {
-        loadVbo();
-            // draw background image
-            //
-            if (bBackgroundLoaded) {
-                ofPushMatrix();
-                ofDisableDepthTest();
-                ofSetColor(50, 50, 50);
-                ofScale(2, 2);
-                //backgroundImage.draw(-200, -100);
-                backgroundImage.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
-                ofEnableDepthTest();
-                ofPopMatrix();
-            }
-            ofEnableDepthTest();
-            
+	// background color
+	ofBackground(32, 32, 32);
 
-            ofSetColor(ofColor::white);
+	// draw a string on screen for directions
+	ofSetColor(0, 128, 255);
 
-            theCam->begin();
+	ofDrawBitmapString("SAVE YOURSELF FROM THE FIGHT WITHIN CONTINENTS!", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2);
+	ofDrawBitmapString("GET TO THE SAFE AREAS HIGHLIGHTED WITHIN 4 MINUTES", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 30);
+	ofDrawBitmapString("OR ELSE....", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 60);
+	ofDrawBitmapString("USE ARROW KEYS TO MOVE YOUR CRAFT", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 90);
+	ofDrawBitmapString("GOOD LUCK AND MAY THE ODDS BE IN YOUR FAVOR", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 120);
+	ofDrawBitmapString("PRESS SPACE BAR TO START GAME!", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 180);
 
-            ofPushMatrix();
+	if (startGame) {
 
-            // draw the lights
-            //landingArea1.draw();
-            //landingArea2.draw();
-            //landingArea3.draw();
-            //areaLight.draw();
-            //sunlight.draw();
+		loadVbo();
+		// draw background image
+		//
+		if (bBackgroundLoaded) {
+			ofPushMatrix();
+			ofDisableDepthTest();
+			if (collision) {
+				ofSetBackgroundColor(ofColor::paleVioletRed);
+				//collision = false;
+			}
+			ofSetColor(50, 50, 50);
+			ofScale(2, 2);
+			//backgroundImage.draw(-200, -100);
+			backgroundImage.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+			ofEnableDepthTest();
+			ofPopMatrix();
+		}
+		ofEnableDepthTest();
 
-                // draw a reference grid
-                //
-            /*
-                ofPushMatrix();
-                ofRotate(90, 0, 0, 1);
-                ofSetLineWidth(1);
-                ofSetColor(ofColor::dimGray);
-                ofDisableLighting();
-                ofDrawGridPlane();
-                ofPopMatrix();
-                */
-            if (bWireFrame) {                    // wireframe mode  (include axis)
-                ofDisableLighting();
-                ofSetColor(ofColor::slateGray);
-                terrain.drawWireframe();
-                if (bLanderLoaded) {
 
-                    //  Note this is how to rotate LEM model about the "Y" or "UP" axis
-                    //
-                    
-                    lander.setRotation(0, angle, 0, 1, 0);
-                    lander.drawWireframe();
-                    if (!bTerrainSelected) drawAxis(lander.getPosition());
-                }
-                if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
-            }
-            else {
-                ofEnableLighting();              // shaded mode
-                terrain.drawFaces();
-                if (bLanderLoaded) {
-                    lander.setRotation(0, angle, 0, 1, 0);
-                    lander.drawFaces();
-                    if (!bTerrainSelected) drawAxis(lander.getPosition());
+		ofSetColor(ofColor::white);
 
-                    ofVec3f min = lander.getSceneMin()*scale + lander.getPosition();
-                    ofVec3f max = lander.getSceneMax()*scale + lander.getPosition();
+		theCam->begin();
 
-                    Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+		ofPushMatrix();
 
-                    landerBounds = bounds;
+		for (int i = 0; i < areas.size(); i++) {
+			ofSetColor(ofColor::lavenderBlush);
+			areas[i].drawWireframe();
+		}
 
-                    // set color of bounding box based on selection status
-                    //
-                    if (bLanderSelected) ofSetColor(ofColor::red);
-                    else ofSetColor(ofColor::white);
-                    ofNoFill();
-                    drawBox(bounds);
-                    ofFill();
-                }
-                if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
-            }
 
-            //lemsys.draw();
-        //    personCam.draw();
-        //    onBoardCam.draw();
-                
-            // add shader effect to fire inside of hot air balloon
-            glDepthMask(GL_FALSE);
+		//emitter.draw(); test impulse effects
 
-            ofSetColor(255, 100, 90);
+		if (bdrawbox) {
+			ofNoFill();
+			ofSetColor(ofColor::white);
 
-            // this makes everything look glowy :)
-            //
-            ofEnableBlendMode(OF_BLENDMODE_ADD);
-            ofEnablePointSprites();
-            
-            // begin drawing in the camera
-            //
-            shader.begin();
-            //cam.begin();
-            //trackCam.begin();
-            //topCam.begin();
+			//draw all the box
+			kdtree.draw(level, 0);
 
-            // draw particle emitter here..
-            //
-            particleTex.bind();
-            vbo.draw(GL_POINTS, 0, (int)lemEmit.sys->particles.size());
-            particleTex.unbind();
-            lemEmit.draw();
-            
-            //  end drawing in the camera
-            //
-            //cam.end();
-            //trackCam.end();
-            //topCam.begin();
-            shader.end();
+			//draw only leaf nodes
+			//kdtree.drawLeafNodes(kdtree.root);
+			ofFill();
+		}
 
-            ofDisablePointSprites();
-            ofDisableBlendMode();
-            ofEnableAlphaBlending();
+		
 
-            // set back the depth mask
-            //
-            glDepthMask(GL_TRUE);
-            
-            if (bDisplayPoints) {                // display points as an option
-                glPointSize(3);
-                ofSetColor(ofColor::green);
-                terrain.drawVertices();
-            }
+		// draw the lights
+		//landingArea1.draw();
+		//landingArea2.draw();
+		//landingArea3.draw();
+		//areaLight.draw();
+		//sunlight.draw();
 
-            // highlight selected point (draw sphere around selected point)
-            //
-            if (bPointSelected) {
-                ofSetColor(ofColor::blue);
-                ofDrawSphere(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z(), .1);
-            }
+		// draw a reference grid
+		//
+		/*
+		ofPushMatrix();
+		ofRotate(90, 0, 0, 1);
+		ofSetLineWidth(1);
+		ofSetColor(ofColor::dimGray);
+		ofDisableLighting();
+		ofDrawGridPlane();
+		ofPopMatrix();	
+		*/
+		
+		
+			
+		
+			if (bWireFrame) {                    // wireframe mode  (include axis)
+				ofDisableLighting();
+				ofSetColor(ofColor::slateGray);
+				terrain.drawWireframe();
+				if (bLanderLoaded) {
 
-            if (intersect) {
-                ofNoFill();
-                ofSetColor(ofColor::white);
-                for (int i = 0; i < boxHitList.size(); i++) {
-                    drawBox(boxHitList[i]);
-                }
-                ofFill();
-            }
-            
-            //emitter.draw(); test impulse effects
-                
-            if (bdrawbox) {
-                ofNoFill();
-                ofSetColor(ofColor::white);
-                
-                //draw all the box
-                //kdtree.draw(level, 0);
-                
-                //draw only leaf nodes
-                kdtree.drawLeafNodes(kdtree.root);
-                ofFill();
-            }
-            
-            // draw landing effect here..
-            //
-            if (landing) {
-                ofSetColor(ofColor::white);
-                landingEmitter.draw();
-            }
-            
-            ofSetColor(ofColor::white);
-            explosion.draw();
-                
-            ofPopMatrix();
+					//  Note this is how to rotate LEM model about the "Y" or "UP" axis
+					//
 
-            theCam->end();
-            
-            ofDisableDepthTest();
-            
-            // draw screen data
-            //
-            string str;
-            str += "Frame Rate: " + std::to_string(ofGetFrameRate());
-            ofSetColor(ofColor::white);
-            ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
+					lander.setRotation(0, angle, 0, 1, 0);
+					lander.drawWireframe();
+					if (!bTerrainSelected) drawAxis(lander.getPosition());
+				}
+				if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+			}
+			else {
+				ofEnableLighting();              // shaded mode
+				terrain.drawFaces();
+				if (bLanderLoaded) {
+					lander.setRotation(0, angle, 0, 1, 0);
+					lander.drawFaces();
+					if (!bTerrainSelected) drawAxis(lander.getPosition());
 
-            string str2;
-            str2 += "Altitude (AGL): " + std::to_string(altitude);
-            ofSetColor(ofColor::white);
-            ofDrawBitmapString(str2, 5, 15);
-            
-            //draw gui pannel
-            if (bHide) {
-                gui.draw();
-            }
-    }
-    
-    if (gameStart > 240 * 1000) {
-        // background color
-        ofBackground(32, 32, 32);
-               
-        // draw a string on screen for directions
-        ofSetColor(218, 165, 32);
-        ofDrawBitmapString("MAY YOU REST IN PEACE MY FRIEND. BETTER LUCK NEXT TIME!", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2));
-    }
+					ofVec3f min = lander.getSceneMin()*scale / 2 + lander.getPosition();
+					ofVec3f max = lander.getSceneMax()*scale / 2 + lander.getPosition();
 
+					Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+
+					landerBounds = bounds;
+
+					// set color of bounding box based on selection status
+					//
+					if (bLanderSelected) ofSetColor(ofColor::red);
+					else ofSetColor(ofColor::white);
+					ofNoFill();
+					//drawBox(bounds);
+					ofFill();
+				}
+				//if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+			}
+
+			landingEmitter.draw();
+			explosion.draw();
+			//lemsys.draw();
+
+			// add shader effect to fire inside of hot air balloon
+			glDepthMask(GL_FALSE);
+
+			ofSetColor(255, 100, 90);
+
+			// this makes everything look glowy :)
+			//
+			ofEnableBlendMode(OF_BLENDMODE_ADD);
+			ofEnablePointSprites();
+
+			// begin drawing in the camera
+			//
+			shader.begin();
+			//cam.begin();
+			//trackCam.begin();
+			//topCam.begin();
+
+			// draw particle emitter here..
+			//
+			particleTex.bind();
+			vbo.draw(GL_POINTS, 0, (int)lemEmit.sys->particles.size());
+			particleTex.unbind();
+			lemEmit.draw();
+
+			//  end drawing in the camera
+			//
+			//cam.end();
+			//trackCam.end();
+			//topCam.begin();
+			shader.end();
+
+			ofDisablePointSprites();
+			ofDisableBlendMode();
+			ofEnableAlphaBlending();
+
+			// set back the depth mask
+			//
+			glDepthMask(GL_TRUE);
+		
+				
+
+		if (bDisplayPoints) {                // display points as an option    
+			glPointSize(3);
+			ofSetColor(ofColor::green);
+			terrain.drawVertices();
+		}
+
+		// highlight selected point (draw sphere around selected point)
+		//
+		if (bPointSelected) {
+			ofSetColor(ofColor::blue);
+			if (insideSphere(ofVec3f(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z()), areas[0])
+				|| insideSphere(ofVec3f(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z()), areas[1])
+				|| insideSphere(ofVec3f(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z()), areas[2])) {
+				ofSetColor(ofColor::deepPink);
+			}
+			ofDrawSphere(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z(), .1);
+		}
+
+		/*
+		if (intersect) {
+			ofNoFill();
+			ofSetColor(ofColor::white);
+			if (boxHitList.size() != 0) {
+				for (int i = 0; i < boxHitList.size(); i++) {
+					drawBox(boxHitList[i]);
+				}
+			}
+			ofFill();
+		}
+		*/
+		
+		ofPopMatrix();
+
+		theCam->end();
+
+		ofDisableDepthTest();
+
+		//draw gui pannel
+		if (bHide) {
+			gui.draw();
+		}
+
+		
+		else ofSetBackgroundColor(ofColor::black);
+		// draw screen data
+		//
+		string str;
+		str += "Frame Rate: " + std::to_string(ofGetFrameRate());
+		ofSetColor(ofColor::white);
+		ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
+
+		string str2;
+		str2 += "Altitude (AGL): " + std::to_string(altitude);
+		ofSetColor(ofColor::white);
+		ofDrawBitmapString(str2, 5, 15);
+
+		
+		string str3;
+		str3 += "Time left: " + std::to_string(240 - gameTime/1000);
+		ofSetColor(ofColor::white);
+		ofDrawBitmapString(str3, 5, 35);
+		//gameTime = ofGetElapsedTimeMillis() - gameStart;
+		
+		string str4;
+		str4 += "HP left: " + std::to_string(life);
+		ofSetColor(ofColor::white);
+		ofDrawBitmapString(str4, 5, 55);
+		
+		if (gameOver) {
+			// background color
+			//ofBackground(32, 32, 32);
+
+			// draw a string on screen for directions
+			ofSetColor(218, 165, 32);
+			ofDrawBitmapString("MAY YOU REST IN PEACE MY FRIEND. BETTER LUCK NEXT TIME!", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2));
+			ofDrawBitmapString("PRESS ENTER TO PLAY AGAIN", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 15));
+		}
+
+		if (landing == true) {
+			// draw landing effect here..
+			//
+			ofSetColor(ofColor::white);
+			
+			ofSetColor(218, 165, 32);
+			ofDrawBitmapString("CONGRATULATIONS, YOU ARE IN SAFE ZONE NOW! ", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2));
+			ofDrawBitmapString("PRESS ENTER TO PLAY AGAIN", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 15));
+
+			//gameOver = true;
+		}
+		
+	}
+	
+	
+
+	/*
+	if ((gameTime > 240*1000 && landing == false)) {
+		//gameOver = true;
+		startGame = false;
+		
+		// background color
+		ofBackground(32, 32, 32);
+
+		// draw a string on screen for directions
+		ofSetColor(218, 165, 32);
+		ofDrawBitmapString("MAY YOU REST IN PEACE MY FRIEND. BETTER LUCK NEXT TIME!", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2));
+		ofDrawBitmapString("PRESS ENTER TO PLAY AGAIN", ofPoint(ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 + 15));
+	}
+	*/
 }
 
+void ofApp::checkLanding() {
+	// check box intersect of lander and terrain
+	boxHitList.clear();
+	if (kdtree.intersect(landerBounds, kdtree.root, boxHitList)) {
+		intersect = true;
+		if (boxHitList.size() != 0) {
+			// check if landing successful
+			int count = 0;
+			for (int i = 0; i < boxHitList.size(); i++) {
+				if (insideSphere(ofVec3f(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z()), areas[0])
+					|| insideSphere(ofVec3f(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z()), areas[1])
+					|| insideSphere(ofVec3f(hitNode.box.center().x(), hitNode.box.center().y(), hitNode.box.center().z()), areas[2])) {
+					count++;
+				}
+			}
+			if (count == boxHitList.size()) {
+				landingEmitter.sys->reset();
+				landingEmitter.start();
+				landingSound.play();
+				landing = true;
+				//collision = false;
+				//break;
+				//cout << "hit all" << endl;
+			}
+			else {
+				//explosion.sys->reset();
+				//explosion.start();
+				explosionSound.play();
+				//collision = true;
+				if (life <= 0) {
+					//life = 0;
+					return;
+				}
+				else life -= 1;
+			}
+
+		}
+	}
+	else intersect = false;
+}
+
+bool ofApp::insideSphere(ofVec3f point, ofIcoSpherePrimitive sphere) {
+	if (point.x <= sphere.getPosition().x + sphere.getRadius() && point.x >= sphere.getPosition().x - sphere.getRadius()
+		&& point.y <= sphere.getPosition().y + sphere.getRadius() && point.y >= sphere.getPosition().y - sphere.getRadius()
+		&& point.z <= sphere.getPosition().z + sphere.getRadius() && point.z >= sphere.getPosition().z - sphere.getRadius()) {
+		return true;
+	}
+	else return false;
+}
 
 // Draw an XYZ axis in RGB at world (0,0,0) for reference.
 //
@@ -609,9 +773,13 @@ void ofApp::drawAxis(ofVec3f location) {
 void ofApp::keyPressed(int key) {
 
 	switch (key) {
-        case ' ':
-//            gameStart = ofGetElapsedTimef();
-            startGame = true;
+	case ' ':
+		
+		if (!startGame) {
+			startGame = true;
+			gameStart = ofGetElapsedTimeMillis();
+		}
+		break;
 	case 'C':
 	case 'c':
 		if (cam.getMouseInputEnabled()) cam.disableMouseInput();
@@ -653,10 +821,10 @@ void ofApp::keyPressed(int key) {
 		toggleWireframeMode();
 		break;
 	case 'd':     // rotate spacecraft clockwise (about Y (UP) axis)
-		angle += 1;
+		angle -= 1;
 		break;
 	case 'a':     // rotate spacecraft counter-clockwise (about Y (UP) axis)
-		angle -= 1;
+		angle += 1;
 		break;
 	case 'w':     // spacecraft thrust UP
 		lemsys.addForce(new ThrusterForce(ofVec3f(0, 2, 0)));
@@ -680,10 +848,11 @@ void ofApp::keyPressed(int key) {
 		break;
 	case OF_KEY_F4:
 		theCam = &onBoardCam;
-//            bOnBoardCam = true;
-        case OF_KEY_F5:
-            theCam = &personCam;
-//            bPersonCam = true;
+		break;
+	case OF_KEY_F5:
+		theCam = &personCam;
+		//            bPersonCam = true;
+		break;
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
 		bAltKeyDown = true;
@@ -697,6 +866,10 @@ void ofApp::keyPressed(int key) {
 		explosion.sys->reset();
 		explosion.start();
 		explosionSound.play();
+		break;
+	case OF_KEY_RETURN:
+		
+		setup();
 		break;
 	case OF_KEY_DEL:
 		break;
@@ -784,10 +957,6 @@ void ofApp::keyReleased(int key) {
 		//lemEmit.stop();
 		landerMvmt.stop();
 		break;
-//            case OF_KEY_F4:
-//                bOnBoardCam = false;
-//            case OF_KEY_F5:
-//                bPersonCam = false;
 	default:
 		break;
 
@@ -812,7 +981,7 @@ void ofApp::mousePressed(int x, int y, int button) {
 	glm::vec3 rayDir = glm::normalize(p - theCam->getPosition());
 	
 	if (bcheckhit) {
-		//check ray collision of the mouse with the leaf node
+		//check ray intersect of the mouse with the leaf node
 		if (kdtree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), kdtree.root, hitNode)) {
 			bPointSelected = true;
 		}
@@ -879,7 +1048,7 @@ void ofApp::mouseDragged(int x, int y, int button) {
 	}
 
 	if (bcheckhit) {
-		// check ray collision with the leaf node when dragging the mouse 
+		// check ray intersect with the leaf node when dragging the mouse 
 		glm::vec3 p = theCam->screenToWorld(glm::vec3(mouseX, mouseY, 0));
 		glm::vec3 rayDir = glm::normalize(p - theCam->getPosition());
 		if (kdtree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), kdtree.root, hitNode)) {
@@ -1169,15 +1338,15 @@ void ofApp::checkCollisions() {
 		// only bother to check for descending particles.
 		//
 		ofVec3f vel = lemsys.particles[i].velocity; // velocity of particle
-		cout << "lemsys vel: "<< vel << endl;
+		//cout << "lemsys vel: "<< vel << endl;
 		//if (vel.y >= 0) break;                             // ascending;
 
 		ofVec3f pos = lemsys.particles[i].position;
 		float xdistance,ydistance,zdistance;
 		for (int j = 0; j < boxHitList.size(); j++) {
-			xdistance = pos.x - boxHitList[j].center().x() - (boxHitList[j].max().x() - boxHitList[j].min().x())/2;
+			//xdistance = pos.x - boxHitList[j].center().x() - (boxHitList[j].max().x() - boxHitList[j].min().x())/2;
 			ydistance = pos.y - boxHitList[j].max().y();
-			zdistance = pos.z - boxHitList[j].center().z() - (boxHitList[j].max().z() - boxHitList[j].min().z())/2;
+			//zdistance = pos.z - boxHitList[j].center().z() - (boxHitList[j].max().z() - boxHitList[j].min().z())/2;
 			//cout <<"max y " <<boxHitList[j].max().y() << endl;
 			//break;
 			
@@ -1189,7 +1358,9 @@ void ofApp::checkCollisions() {
 				ofVec3f norm = ofVec3f(0, 1, 0);  // just use vertical for normal for now
 				ofVec3f f = (0.5 + 1.0)*((-vel.dot(norm))*norm);
 				lemsys.particles[i].forces += ofGetFrameRate() * f;
+				break;
 			}
+			/*
 			if (xdistance < lemsys.particles[i].radius) {
 				cout << "hit x" << endl;
 				// apply impulse function
@@ -1214,7 +1385,8 @@ void ofApp::checkCollisions() {
 				ofVec3f f = (1 + 1.0)*((-vel.dot(norm))*norm);
 				lemsys.particles[i].forces += ofGetFrameRate() * f;
 			}
-			break;
+			
+			*/
 		}
 		
 				

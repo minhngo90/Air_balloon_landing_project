@@ -53,7 +53,7 @@ class ofApp : public ofBaseApp{
 		ofCamera topCam;
 		ofCamera trackCam;
 		ofCamera onBoardCam;
-    ofCamera personCam;
+		ofCamera personCam;
 		
 		ofLight light;
 		ofImage backgroundImage;
@@ -89,8 +89,8 @@ class ofApp : public ofBaseApp{
 		bool bWireFrame = false;
 		bool bModelLoaded = false;
 		bool bPlaneLoaded = false;
-    bool bPersonCam = false;
-    bool bOnBoardCam = false;
+		bool bPersonCam = false;
+		bool bOnBoardCam = false;
 
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
@@ -120,11 +120,13 @@ class ofApp : public ofBaseApp{
 		bool intersect = false;
 		vector<Box> boxHitList;
 		bool collision = false;
+		int life;
 
 		// sound
 		ofSoundPlayer landerMvmt;
 		ofSoundPlayer landingSound;
 		ofSoundPlayer explosionSound;
+		ofSoundPlayer backgroundSound;
 
 		// lighting variables 
 		ofLight landingArea1, landingArea2, landingArea3, areaLight, sunlight;
@@ -152,6 +154,15 @@ class ofApp : public ofBaseApp{
 		bool checkAltitude;
 		bool gameOver;
 		bool startGame;
-    float gameStart;
+		float gameStart;
+		float gameTime;
+		bool restart;
+
+		ofMesh areaMesh1, areaMesh2, areaMesh3;
+		vector<ofMesh> areaMeshes;
+		ofIcoSpherePrimitive area1, area2, area3;
+		vector<ofIcoSpherePrimitive> areas;
+		bool insideSphere(ofVec3f point, ofIcoSpherePrimitive sphere);
+		void checkLanding();
 		
 };
